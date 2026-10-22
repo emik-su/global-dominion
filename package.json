@@ -1,0 +1,11 @@
+{
+  "name": "global-dominion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GLOBAL DOMINION — 3D-стратегия с сетевой игрой (сервер комнат: Cloudflare Workers или Node.js)",
+  "scripts": {
+    "start": "node server.js",
+    "deploy": "wrangler deploy"
+  }
+}

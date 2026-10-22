@@ -1,0 +1,374 @@
+// =====================================================================
+//  Комната сетевой игры GLOBAL DOMINION — общий код сервера
+//  (одинаково работает в Node.js и в Cloudflare Durable Object).
+//
+//  Лобби: участники (по постоянному токену браузера), места на карте
+//  (игрок / ИИ / свободно / закрыто), фракции, цвета, союзы, правила.
+//  Бой (lockstep): сервер не считает бой — он отсчитывает ходы по 100 мс
+//  и рассылает всем одинаковые списки приказов. Игры участников считают
+//  одно и то же и раз в 5 ходов присылают хеш состояния — сервер сверяет.
+//  Обрыв связи: 30 с — войсками командует ИИ (приказ «drop» в ходе);
+//  вернувшийся получает пропущенные ходы и снова командует («back»).
+// =====================================================================
+export const PROTO = 1;
+const TURN_MS = 100;
+const MAX_MEMBERS = 10;
+const KINDS = ['open', 'easy', 'normal', 'hard', 'closed'];
+const FACTIONS = ['random', 'usa', 'rus', 'ger', 'irn', 'isr', 'chn', 'ind', 'ukr'];
+const COLORS = 10;
+const CREDITS = [2500, 5000, 10000];
+// сроки (мс); для проверок их можно сократить: io.timing
+const TIMING = {
+  DROP_AFTER: 30000,  // нет связи 30 с — войсками командует ИИ
+  LOBBY_GRACE: 45000, // в лобби место держится 45 с после обрыва
+  SILENT_MS: 12000,   // участник молчит 12 с (свернул приложение) — бой его не ждёт
+  LOAD_WAIT: 60000,   // ждём загрузки карты у всех не дольше минуты
+  EMPTY_END: 60000,   // в бою никого на связи — через минуту бой закрывается
+};
+const LAG_PAUSE = 30;       // отставание (ходов), при котором бой ждёт отстающего
+const LAG_RESUME = 12;
+const MAX_MSG = 16384;
+
+const clean = (s, n = 16) => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+
+export class Room {
+  // io: { setInterval, clearInterval, now(), onEmpty() }
+  constructor(code, io) {
+    this.code = code;
+    this.io = io;
+    this.members = [];
+    this.nextId = 1;
+    this.host = 0;
+    this.created = false;
+    this.state = 'lobby';
+    this.s = { map: 'crossing', credits: 5000, sw: true, fog: true, dyn: true, cyc: true };
+    this.slots = [];
+    this.game = null;
+    this.timer = null;
+    this.houseT = 0;
+    this.conns = new Set();
+    this.T = Object.assign({}, TIMING, io.timing || {});
+  }
+  now() { return this.io.now(); }
+
+  // ---------- соединения ----------
+  open(conn) {
+    conn.member = null; conn.rate = 0; conn.rateT = this.now(); conn.chatT = 0;
+    this.conns.add(conn);
+    this.ensureTimer();
+  }
+  closed(conn) {
+    this.conns.delete(conn);
+    const m = conn.member;
+    conn.member = null;
+    if (!m || m.conn !== conn) return;
+    m.conn = null; m.on = false; m.offT = this.now();
+    this.broadcastRoom();
+  }
+  message(conn, raw) {
+    if (typeof raw !== 'string' || raw.length > MAX_MSG) return;
+    // не больше ~60 сообщений в секунду с соединения
+    const t = this.now();
+    if (t - conn.rateT > 1000) { conn.rateT = t; conn.rate = 0; }
+    if (++conn.rate > 60) { if (conn.rate > 400) conn.close(4008, 'flood'); return; }
+    let msg;
+    try { msg = JSON.parse(raw); } catch (e) { return; }
+    if (!msg || typeof msg.t !== 'string') return;
+    if (msg.t === 'hello') { this.hello(conn, msg); return; }
+    const m = conn.member;
+    if (m) m.lastMsg = t; // любое сообщение — участник на связи (свёрнутое приложение молчит)
+    if (msg.t === 'ping') { this.send(conn, { t: 'pong', k: msg.k }); return; }
+    if (!m) return;
+    const h = this['on_' + msg.t];
+    if (typeof h === 'function') h.call(this, m, msg);
+  }
+  send(conn, obj) { if (conn) { try { conn.send(JSON.stringify(obj)); } catch (e) { /* закрыто */ } } }
+  sendM(m, obj) { if (m.conn) this.send(m.conn, obj); }
+  broadcast(obj) { const s = JSON.stringify(obj); for (const m of this.members) if (m.conn) { try { m.conn.send(s); } catch (e) { /* закрыто */ } } }
+  err(conn, code, text, close) { this.send(conn, { t: 'err', code, m: text }); if (close) setTimeout(() => { try { conn.close(4000, code); } catch (e) { /* уже */ } }, 50); }
+
+  hello(conn, msg) {
+    if (conn.member) return;
+    if (msg.v !== PROTO) { this.err(conn, 'version', 'Версия игры отличается от сервера — обновите страницу', true); return; }
+    const tok = String(msg.tok || '').slice(0, 40);
+    if (!/^[A-Za-z0-9]{12,40}$/.test(tok)) { this.err(conn, 'tok', 'Ошибка входа', true); return; }
+    let m = this.members.find((x) => x.tok === tok);
+    if (m) {
+      // переподключение: старое соединение закрываем
+      if (m.conn && m.conn !== conn) { const old = m.conn; old.member = null; try { old.close(4001, 'replaced'); } catch (e) { /* уже */ } }
+    } else {
+      if (!this.created) {
+        if (!msg.create) { this.err(conn, 'notfound', 'Комната не найдена: проверьте код или создайте новую', true); return; }
+        this.created = true;
+        const n = Math.max(2, Math.min(6, msg.n | 0 || 2));
+        if (typeof msg.map === 'string' && /^[a-z0-9_-]{1,24}$/.test(msg.map)) this.s.map = msg.map;
+        for (let i = 0; i < n; i++) this.slots.push({ k: 'open', m: 0, f: 'random', c: i % COLORS, t: 0 });
+      } else if (msg.create) { this.err(conn, 'exists', 'Такая комната уже есть', true); return; }
+      if (this.members.length >= MAX_MEMBERS) { this.err(conn, 'full', 'Комната заполнена', true); return; }
+      m = { id: this.nextId++, tok, name: clean(msg.name) || 'Игрок', conn: null, on: false, offT: 0, slot: -1, lastMsg: this.now(), ack: -1, loaded: false, over: false, pid: -1, dropped: false };
+      this.members.push(m);
+      if (!this.host) this.host = m.id;
+      // новичок — на первое свободное место (во время боя — зритель до следующего)
+      if (this.state === 'lobby') {
+        const i = this.slots.findIndex((s) => s.k === 'open');
+        if (i >= 0) this.seat(m, i);
+      }
+      if (this.members.length > 1) this.chat(null, m.name + ' в комнате');
+    }
+    m.conn = conn; m.on = true; m.lastMsg = this.now();
+    if (msg.name) m.name = clean(msg.name) || m.name;
+    conn.member = m;
+    this.broadcastRoom();
+  }
+  seat(m, i) {
+    if (m.slot >= 0 && this.slots[m.slot] && this.slots[m.slot].m === m.id) { const o = this.slots[m.slot]; o.k = 'open'; o.m = 0; }
+    m.slot = i;
+    if (i >= 0) { const s = this.slots[i]; s.k = 'human'; s.m = m.id; }
+  }
+  removeMember(m) {
+    const i = this.members.indexOf(m);
+    if (i < 0) return;
+    this.members.splice(i, 1);
+    if (this.game && m.pid >= 0 && !m.dropped && !m.over) this.dropPid(m);
+    if (this.state === 'lobby' && m.slot >= 0) this.seat(m, -1);
+    if (this.host === m.id) {
+      const h = this.members.find((x) => x.on) || this.members[0];
+      this.host = h ? h.id : 0;
+      if (h) this.chat(null, h.name + ' — теперь хост комнаты');
+    }
+    if (this.members.length) { this.chat(null, m.name + ' вышел'); this.broadcastRoom(); }
+    this.checkEnd();
+  }
+
+  // ---------- состояние комнаты ----------
+  roomFor(m) {
+    return {
+      t: 'room', code: this.code, me: m.id, host: this.host, state: this.state, s: this.s, gid: this.game ? this.game.id : '',
+      playing: !!this.game && m.pid >= 0 && !m.over && !m.dropped,
+      slots: this.slots.map((s) => ({ k: s.k, m: s.m, f: s.f, c: s.c, t: s.t })),
+      mem: this.members.map((x) => ({ id: x.id, name: x.name, on: x.on, slot: x.slot })),
+    };
+  }
+  broadcastRoom() { for (const m of this.members) if (m.conn) this.send(m.conn, this.roomFor(m)); }
+  chat(m, text) { this.broadcast({ t: 'chat', n: m ? m.name : '', m: text, sys: !m }); }
+
+  // ---------- лобби ----------
+  on_name(m, msg) { const n = clean(msg.name); if (n) { m.name = n; this.broadcastRoom(); } }
+  on_chat(m, msg) {
+    const t = this.now();
+    if (t - (m.chatT || 0) < 400) return;
+    m.chatT = t;
+    const text = clean(msg.m, 140);
+    if (text) this.chat(m, text);
+  }
+  on_set(m, msg) {
+    if (m.id !== this.host || this.state !== 'lobby' || !msg.s || typeof msg.s !== 'object') return;
+    const s = msg.s;
+    if (typeof s.map === 'string' && /^[a-z0-9_-]{1,24}$/.test(s.map)) this.s.map = s.map;
+    if (CREDITS.includes(s.credits)) this.s.credits = s.credits;
+    for (const k of ['sw', 'fog', 'dyn', 'cyc']) if (typeof s[k] === 'boolean') this.s[k] = s[k];
+    if (msg.n !== undefined) this.resize(Math.max(2, Math.min(6, msg.n | 0)));
+    this.broadcastRoom();
+  }
+  resize(n) {
+    while (this.slots.length < n) {
+      const used = new Set(this.slots.map((s) => s.c));
+      let c = 0; while (used.has(c) && c < COLORS - 1) c++;
+      this.slots.push({ k: 'open', m: 0, f: 'random', c, t: 0 });
+    }
+    if (this.slots.length > n) {
+      const cut = this.slots.splice(n);
+      for (const s of cut) {
+        if (s.k !== 'human') continue;
+        const mm = this.members.find((x) => x.id === s.m);
+        if (!mm) continue;
+        mm.slot = -1;
+        const i = this.slots.findIndex((x) => x.k === 'open');
+        if (i >= 0) this.seat(mm, i);
+      }
+    }
+  }
+  on_slot(m, msg) {
+    if (this.state !== 'lobby') return;
+    const i = msg.i | 0, s = this.slots[i];
+    if (!s || i !== msg.i) return;
+    const host = m.id === this.host, own = s.k === 'human' && s.m === m.id, ai = s.k !== 'human' && s.k !== 'open' && s.k !== 'closed';
+    if (msg.k !== undefined) {
+      if (!host || s.k === 'human' || !KINDS.includes(msg.k)) return;
+      s.k = msg.k;
+    }
+    if (own || (host && ai) || (host && msg.k !== undefined)) {
+      if (msg.f !== undefined && FACTIONS.includes(msg.f)) s.f = msg.f;
+      if (msg.team !== undefined && Number.isInteger(msg.team) && msg.team >= 0 && msg.team <= 3) s.t = msg.team;
+      if (msg.c !== undefined && Number.isInteger(msg.c) && msg.c >= 0 && msg.c < COLORS && msg.c !== s.c) {
+        // занятый цвет — места меняются цветами
+        const o = this.slots.find((x) => x !== s && x.c === msg.c);
+        if (o) o.c = s.c;
+        s.c = msg.c;
+      }
+    }
+    this.broadcastRoom();
+  }
+  on_take(m, msg) {
+    if (this.state !== 'lobby') return;
+    const i = msg.i | 0;
+    if (i === -1) { this.seat(m, -1); this.broadcastRoom(); return; }
+    const s = this.slots[i];
+    if (!s || s.k !== 'open') return;
+    this.seat(m, i);
+    this.broadcastRoom();
+  }
+  // ---------- старт боя ----------
+  on_start(m, msg) {
+    if (m.id !== this.host || this.state !== 'lobby') return;
+    const cfg = msg.cfg;
+    const bad = (t) => this.sendM(m, { t: 'err', code: 'start', m: t });
+    if (!cfg || typeof cfg !== 'object' || !Array.isArray(cfg.players) || JSON.stringify(cfg).length > 12000) { bad('Не удалось начать бой'); return; }
+    const P = cfg.players;
+    if (P.length < 2 || P.length > 6) { bad('Нужно от 2 до 6 участников'); return; }
+    // состав должен совпадать с местами комнаты (иначе места поменялись — пусть хост нажмёт ещё раз)
+    for (let i = 0; i < this.slots.length; i++) {
+      const s = this.slots[i], p = P.find((x) => x && x.slot === i);
+      const want = s.k !== 'open' && s.k !== 'closed';
+      if (want !== !!p || (p && !!p.human !== (s.k === 'human'))) { bad('Состав изменился — нажмите «В бой» ещё раз'); return; }
+      if (s.k === 'human') {
+        const mm = this.members.find((x) => x.id === s.m);
+        if (!mm || !mm.on) { bad('Не все игроки на связи'); return; }
+      }
+    }
+    const id = Math.random().toString(36).slice(2, 10);
+    cfg.seed = (Math.random() * 4294967296) >>> 0;
+    cfg.mp = true;
+    this.state = 'game';
+    this.game = { id, cfg, turn: 0, log: [], pending: [], started: false, paused: false, t0: this.now(), desync: -1, hashes: new Map() };
+    for (const mm of this.members) {
+      mm.pid = mm.slot >= 0 ? P.findIndex((x) => x.slot === mm.slot && x.human) : -1;
+      mm.loaded = false; mm.over = false; mm.dropped = false; mm.ack = -1; mm.cmdN = 0;
+      this.sendM(mm, { t: 'start', id, cfg, me: mm.pid >= 0 ? mm.slot : -1 });
+    }
+    this.broadcastRoom();
+    this.ensureTimer();
+  }
+  on_loaded(m, msg) { if (this.game && msg.id === this.game.id) m.loaded = true; }
+  // ---------- бой ----------
+  on_c(m, msg) {
+    const g = this.game;
+    if (!g || m.pid < 0 || m.dropped || !Array.isArray(msg.c) || typeof msg.c[0] !== 'string') return;
+    if (msg.c[0] === 'drop' || msg.c[0] === 'back') return;
+    if (JSON.stringify(msg.c).length > 2048) return;
+    if (++m.cmdN > 40) return; // не больше 40 приказов за ход
+    g.pending.push([m.pid, msg.c]);
+  }
+  on_h(m, msg) {
+    const g = this.game;
+    if (!g || !Number.isInteger(msg.n) || msg.n < 0 || msg.n >= g.turn || !Number.isInteger(msg.h)) return;
+    if (msg.n > m.ack) m.ack = msg.n;
+    let e = g.hashes.get(msg.n);
+    if (!e) { e = new Map(); g.hashes.set(msg.n, e); }
+    e.set(m.id, msg.h >>> 0);
+    if (e.size >= 2 && g.desync < 0) {
+      const v = [...e.values()];
+      if (v.some((x) => x !== v[0])) { g.desync = msg.n; this.broadcast({ t: 'desync', n: msg.n }); }
+    }
+    if (g.hashes.size > 120) for (const k of g.hashes.keys()) { if (k < g.turn - 600) g.hashes.delete(k); else break; }
+  }
+  on_resume(m, msg) {
+    const g = this.game;
+    if (!g || msg.id !== g.id) return;
+    const from = Math.max(0, msg.from | 0);
+    const list = [];
+    for (let n = from; n < g.turn; n++) list.push([n, g.log[n] || 0]);
+    this.sendM(m, { t: 'turns', id: g.id, list });
+    if (m.dropped && m.pid >= 0 && !m.over) { m.dropped = false; g.pending.push([m.pid, ['back']]); this.chat(null, m.name + ' вернулся в бой'); }
+  }
+  on_over(m) { if (this.game) { m.over = true; this.checkEnd(); } }
+  // игрок ушёл из боя в комнату: войсками командует ИИ
+  on_lobby(m) {
+    if (!this.game) return;
+    if (m.pid >= 0 && !m.dropped && !m.over) this.dropPid(m);
+    m.over = true;
+    this.checkEnd();
+  }
+  on_leave(m) {
+    const c = m.conn;
+    this.removeMember(m);
+    if (c) { c.member = null; try { c.close(1000, 'leave'); } catch (e) { /* уже */ } }
+  }
+  dropPid(m) {
+    const g = this.game;
+    if (!g || m.pid < 0 || m.dropped) return;
+    m.dropped = true;
+    g.pending.push([m.pid, ['drop', 'normal']]);
+    this.chat(null, m.name + ' не в бою — войсками командует ИИ');
+  }
+  checkEnd() {
+    const g = this.game;
+    if (!g) return;
+    // бой идёт, пока есть хоть один игрок, не завершивший его у себя и не отданный ИИ
+    const active = this.members.filter((x) => x.pid >= 0 && !x.over && !x.dropped);
+    if (active.length) return;
+    this.endGame();
+  }
+  endGame() {
+    this.state = 'lobby'; this.game = null;
+    for (const m of this.members) { m.pid = -1; m.loaded = false; m.over = false; m.dropped = false; }
+    // места ушедших освобождаются
+    for (const s of this.slots) if (s.k === 'human' && !this.members.some((x) => x.id === s.m)) { s.k = 'open'; s.m = 0; }
+    this.broadcast({ t: 'end' });
+    this.broadcastRoom();
+  }
+
+  // ---------- часы: ходы, обрывы связи ----------
+  ensureTimer() {
+    if (this.timer) return;
+    this.timer = this.io.setInterval(() => this.tick(), TURN_MS / 2);
+  }
+  stopTimer() { if (this.timer) { this.io.clearInterval(this.timer); this.timer = null; } }
+  tick() {
+    const t = this.now();
+    if (t - this.houseT > 1000) { this.houseT = t; this.housekeeping(t); }
+    const g = this.game;
+    if (!g) return;
+    if (!g.started) {
+      const waiting = this.members.filter((x) => x.pid >= 0 && x.on && !x.loaded);
+      if (waiting.length && t - g.t0 < this.T.LOAD_WAIT) return;
+      g.started = true; g.t0 = t;
+    }
+    // бой ждёт отстающего (кроме тех, кто молчит — свернул приложение: он догонит потом)
+    const live = this.members.filter((x) => x.pid >= 0 && x.on && !x.dropped && !x.over && x.loaded && t - x.lastMsg < this.T.SILENT_MS);
+    const minAck = live.length ? Math.min(...live.map((x) => x.ack)) : g.turn;
+    const lag = g.turn - 1 - minAck;
+    if (!g.paused && lag > LAG_PAUSE) {
+      g.paused = true;
+      this.broadcast({ t: 'wait', w: live.filter((x) => g.turn - 1 - x.ack > LAG_RESUME).map((x) => x.name) });
+    } else if (g.paused && lag <= LAG_RESUME) {
+      g.paused = false; g.t0 = t - g.turn * TURN_MS;
+      this.broadcast({ t: 'wait', w: [] });
+    }
+    if (g.paused) return;
+    // ходы по реальному времени (после задержки таймера — до 4 ходов подряд)
+    const due = Math.floor((t - g.t0) / TURN_MS) + 1;
+    let k = 0;
+    while (g.turn < due && k++ < 4) {
+      const c = g.pending; g.pending = [];
+      for (const m of this.members) m.cmdN = 0;
+      g.log.push(c.length ? c : 0);
+      this.broadcast(c.length ? { t: 'T', n: g.turn, c } : { t: 'T', n: g.turn });
+      g.turn++;
+    }
+    if (g.turn < due - 20) g.t0 = t - g.turn * TURN_MS; // долгая задержка — не устраиваем лавину ходов
+  }
+  housekeeping(t) {
+    for (const m of this.members.slice()) {
+      if (m.on) continue;
+      if (this.game && m.pid >= 0) { if (!m.dropped && !m.over && t - m.offT > this.T.DROP_AFTER) { this.dropPid(m); this.checkEnd(); } }
+      else if (t - m.offT > this.T.LOBBY_GRACE) this.removeMember(m);
+    }
+    if (this.game && !this.members.some((x) => x.on)) {
+      // никого на связи: через минуту бой закрывается
+      if (!this.game.emptyT) this.game.emptyT = t;
+      else if (t - this.game.emptyT > this.T.EMPTY_END) this.endGame();
+    } else if (this.game) this.game.emptyT = 0;
+    if (!this.members.length && !this.conns.size) { this.stopTimer(); if (this.io.onEmpty) this.io.onEmpty(); }
+  }
+}

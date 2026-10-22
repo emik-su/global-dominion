@@ -1,0 +1,23 @@
+# GLOBAL DOMINION — сервер сетевой игры на Cloudflare Workers (бесплатный тариф)
+name = "global-dominion"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+# игра (index.html) встраивается в код сервера как текст
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = false
+
+# комнаты: по одному Durable Object на код комнаты
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "RoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDO"]
+
+[vars]
+# Ссылка на бота Telegram: приглашения в комнату будут вида https://t.me/RTSGD_bot?startapp=КОД
+TG_LINK = "https://t.me/RTSGD_bot"

@@ -2,6 +2,8 @@
 name = "global-dominion"
 main = "worker.js"
 compatibility_date = "2025-06-01"
+# адрес вида https://global-dominion.<поддомен>.workers.dev
+workers_dev = true
 
 # игра (index.html) встраивается в код сервера как текст
 [[rules]]

@@ -144,7 +144,7 @@ export class Room {
   roomFor(m) {
     return {
       t: 'room', code: this.code, me: m.id, host: this.host, state: this.state, s: this.s, gid: this.game ? this.game.id : '',
-      playing: !!this.game && m.pid >= 0 && !m.over && !m.dropped,
+      playing: !!this.game && m.pid >= 0 && !m.over,
       slots: this.slots.map((s) => ({ k: s.k, m: s.m, f: s.f, c: s.c, t: s.t })),
       mem: this.members.map((x) => ({ id: x.id, name: x.name, on: x.on, slot: x.slot })),
     };
@@ -243,7 +243,7 @@ export class Room {
     this.game = { id, cfg, turn: 0, log: [], pending: [], started: false, paused: false, t0: this.now(), desync: -1, hashes: new Map() };
     for (const mm of this.members) {
       mm.pid = mm.slot >= 0 ? P.findIndex((x) => x.slot === mm.slot && x.human) : -1;
-      mm.loaded = false; mm.over = false; mm.dropped = false; mm.ack = -1; mm.cmdN = 0;
+      mm.loaded = false; mm.over = false; mm.dropped = false; mm.catching = false; mm.ack = -1; mm.cmdN = 0;
       this.sendM(mm, { t: 'start', id, cfg, me: mm.pid >= 0 ? mm.slot : -1 });
     }
     this.broadcastRoom();
@@ -263,6 +263,11 @@ export class Room {
     const g = this.game;
     if (!g || !Number.isInteger(msg.n) || msg.n < 0 || msg.n >= g.turn || !Number.isInteger(msg.h)) return;
     if (msg.n > m.ack) m.ack = msg.n;
+    // вернувшийся догнал бой: снова сам командует войсками (до этого — ИИ)
+    if (m.catching && msg.n >= g.turn - LAG_RESUME) {
+      m.catching = false;
+      if (m.dropped && m.pid >= 0 && !m.over) { m.dropped = false; g.pending.push([m.pid, ['back']]); this.chat(null, m.name + ' вернулся в бой'); }
+    }
     let e = g.hashes.get(msg.n);
     if (!e) { e = new Map(); g.hashes.set(msg.n, e); }
     e.set(m.id, msg.h >>> 0);
@@ -279,7 +284,18 @@ export class Room {
     const list = [];
     for (let n = from; n < g.turn; n++) list.push([n, g.log[n] || 0]);
     this.sendM(m, { t: 'turns', id: g.id, list });
-    if (m.dropped && m.pid >= 0 && !m.over) { m.dropped = false; g.pending.push([m.pid, ['back']]); this.chat(null, m.name + ' вернулся в бой'); }
+    m.catching = true; // командовать снова — когда догонит
+  }
+  // страница перезагрузилась посреди боя: заново описание боя и все ходы с начала — игра у
+  // участника пересчитает бой быстрее реального времени и догонит остальных
+  on_rejoin(m) {
+    const g = this.game;
+    if (!g || m.pid < 0 || m.over) return;
+    m.loaded = false; m.ack = -1; m.catching = true;
+    this.sendM(m, { t: 'start', id: g.id, cfg: g.cfg, me: m.slot, rejoin: true });
+    const list = [];
+    for (let n = 0; n < g.turn; n++) list.push([n, g.log[n] || 0]);
+    this.sendM(m, { t: 'turns', id: g.id, list });
   }
   on_over(m) { if (this.game) { m.over = true; this.checkEnd(); } }
   // игрок ушёл из боя в комнату: войсками командует ИИ
@@ -335,7 +351,7 @@ export class Room {
       g.started = true; g.t0 = t;
     }
     // бой ждёт отстающего (кроме тех, кто молчит — свернул приложение: он догонит потом)
-    const live = this.members.filter((x) => x.pid >= 0 && x.on && !x.dropped && !x.over && x.loaded && t - x.lastMsg < this.T.SILENT_MS);
+    const live = this.members.filter((x) => x.pid >= 0 && x.on && !x.dropped && !x.over && x.loaded && !x.catching && t - x.lastMsg < this.T.SILENT_MS);
     const minAck = live.length ? Math.min(...live.map((x) => x.ack)) : g.turn;
     const lag = g.turn - 1 - minAck;
     if (!g.paused && lag > LAG_PAUSE) {

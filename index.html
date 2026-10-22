@@ -359,6 +359,7 @@ body.rotated #guide-body { max-height: calc(100vw - 190px); }
 #lobby-err { color: var(--warn); font-size: 13px; min-height: 1.2em; margin: 0; }
 .opts { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
 .opt { display: flex; flex-direction: column; gap: 6px; }
+.tgl[hidden], .opt[hidden] { display: none; }
 .opt > span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
 .seg { display: inline-flex; align-self: flex-start; border: 1px solid var(--line-hi); border-radius: 3px; overflow: hidden; }
 .seg label { position: relative; cursor: pointer; }
@@ -676,9 +677,14 @@ body:not(.touch) .touch-only { display: none; }
 #on-chat-form { display: flex; gap: 8px; }
 #on-chat-in { flex: 1; min-width: 0; min-height: 38px; }
 #online .mn-foot .btn-ghost { margin-right: auto; }
-#mp-hud { gap: 7px; }
-#mp-hud span { color: var(--ink-dim); font-size: 13px; }
-#mp-hud b { font-family: var(--f-mono); font-size: 12px; color: var(--ink-faint); font-weight: 400; }
+#mp-hud { gap: 6px; }
+#mp-hud b { font-family: var(--f-mono); font-size: 12px; color: var(--ink-dim); font-weight: 400; }
+#mp-banner { position: absolute; top: calc(var(--gt) + 104px); left: 50%; transform: translateX(-50%); max-width: calc(100% - var(--gl) - var(--gr) - 80px); box-sizing: border-box; padding: 6px 14px; font-size: 14px; color: var(--warn); background: var(--glass-hi); border: 1px solid rgba(240,192,74,0.45); border-radius: 3px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#mp-banner[data-s="bad"] { color: #ffd2c8; border-color: rgba(255,90,70,0.6); }
+#pause-chat { display: flex; gap: 8px; margin: 10px 0 4px; }
+#pause-chat[hidden] { display: none; }
+#pause-chat input { flex: 1; min-width: 0; min-height: 38px; box-sizing: border-box; padding: 6px 11px; font: inherit; font-size: 16px; color: var(--ink); background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); border-radius: 3px; }
+html.tg #b-full { display: none; }
 #mp-hud .mp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); flex: none; }
 #mp-hud[data-s="warn"] .mp-dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
 #mp-hud[data-s="warn"] span { color: var(--warn); }
@@ -724,6 +730,7 @@ body:not(.touch) .touch-only { display: none; }
   </div>
   <div id="alerts" aria-live="polite"></div>
   <div id="hint" hidden></div>
+  <div id="mp-banner" role="status" hidden></div>
   <div id="infocard" class="glass" role="dialog" aria-label="Справка" hidden></div>
   <div id="quick">
     <button type="button" data-q="hq" aria-label="Штаб и меню стройки"><i></i>Штаб</button>
@@ -1014,6 +1021,7 @@ body:not(.touch) .touch-only { display: none; }
         </div>
       </div>
       <div class="table-wrap" id="pause-players"></div>
+      <form id="pause-chat" hidden><label class="vh" for="pause-chat-in">Сообщение игрокам</label><input type="text" id="pause-chat-in" maxlength="140" enterkeyhint="send" autocomplete="off" placeholder="Сообщение игрокам…"><button type="submit" class="btn-ghost btn-sm">Отправить</button></form>
       <div class="row">
         <button type="button" class="btn-main" id="b-resume">Продолжить</button>
         <button type="button" class="btn-ghost" id="b-guide">Справочник</button>
@@ -12917,7 +12925,7 @@ const SFX = {
     return v;
   },
   play(name, x, z, volMul = 1) {
-    if (!this.ready || Settings.muted || (G.state !== 'playing' && G.state !== 'over')) return null;
+    if (!this.ready || Settings.muted || (G.state !== 'playing' && G.state !== 'over') || (G.mp && Lockstep.catching)) return null;
     if (!this.bank[name]) return null; // банк ещё считается (первые доли секунды после запуска)
     const now = this.ctx.currentTime;
     if (this.last[name] && now - this.last[name] < (this.GAP[name] ?? 0.04)) return null;
@@ -12964,7 +12972,7 @@ const SFX = {
     o.start(t0); o.stop(t0 + decay + 0.05);
   },
   ui(name) {
-    if (!this.ready || Settings.muted) return;
+    if (!this.ready || Settings.muted || (G.mp && Lockstep.catching)) return;
     const now = this.ctx.currentTime, dest = this.out(0.5, 0), t = now + 0.005;
     switch (name) {
       case 'click': this.tone(dest, t, 'sine', 1300, 1100, 0.16, 0.05); break;
@@ -23464,9 +23472,11 @@ const UI = {
     if (wx) wx.textContent = (G.mp ? 'Сетевая игра — бой не останавливается. ' : '') + (G.state === 'playing' || G.state === 'over' ? Weather.status() : '');
     // в сети туман войны и скорость — правила комнаты
     const t = $('pause-title'); if (t) t.textContent = G.mp ? 'Меню' : 'Пауза';
-    const fogEl = $('opt-fog'); if (fogEl) { fogEl.disabled = G.mp; if (G.mp) fogEl.checked = Fog.enabled; }
+    const fogEl = $('opt-fog'); if (fogEl) { fogEl.disabled = G.mp; if (G.mp) fogEl.checked = Fog.enabled; const l = fogEl.closest('.tgl'); if (l) l.hidden = G.mp; }
     document.querySelectorAll('[name="speed"]').forEach((r) => { r.disabled = G.mp; });
+    const sp = $('lbl-speed'); if (sp && sp.parentElement) sp.parentElement.hidden = G.mp;
     const rb = $('b-restart'); if (rb) rb.textContent = G.mp ? 'Покинуть бой' : 'В главное меню';
+    const pc = $('pause-chat'); if (pc) pc.hidden = !G.mp;
   },
   teamLabel(P) { return P.ally ? 'Команда ' + P.ally : 'Сам за себя'; },
   playersTable(end) {
@@ -23487,6 +23497,7 @@ const UI = {
 
   // ---------------- уведомления ----------------
   notify(msg, kind = 'info', x, z) {
+    if (G.mp && Lockstep.catching) return; // восстановление боя: старые события не показываем
     if (G.state === 'menu' || G.state === 'loading') return;
     const box = $('alerts');
     const el = document.createElement('div');
@@ -25120,7 +25131,7 @@ function frame(now) {
   Net.tickPing(dt);
   if (Online.active) Online.frame(dt);
   EngineSnd.frame(dt, running);
-  if (!window.__rtsNoRender) {
+  if (!window.__rtsNoRender && !(G.mp && Lockstep.catching)) {
     Portraits.flush(G.state === 'menu' ? 3 : 6);
     drawWorld(running || G.state === 'menu' ? dt * speed : 0);
     Post.render(R.scene, R.camera);
@@ -25390,11 +25401,21 @@ const Lockstep = {
     return k * MP_TPT - this.sub;
   },
   frame(dt) {
-    if (!this.running || this.ended) return 0;
+    if (!this.running || this.ended) { this.catching = false; return 0; }
     const avail = this.available();
     this.acc += Math.min(dt, 0.25);
-    if (avail <= 0) { this.acc = Math.min(this.acc, MP_TICK); this.stallT += dt; return 0; }
+    if (avail <= 0) { this.acc = Math.min(this.acc, MP_TICK); this.stallT += dt; this.catching = false; return 0; }
     this.stallT = 0;
+    // далеко позади (вернулись в бой, приложение было свёрнуто): считаем без отрисовки и звука, пока не догоним
+    if (this.catching ? avail > MP_TPT * 3 : avail > MP_TPT * 60) {
+      this.catching = true;
+      const t0 = performance.now();
+      let done = 0;
+      while (done < avail - MP_TPT * 2 && performance.now() - t0 < 120) { this.runTick(); done++; }
+      this.acc = 0;
+      return done;
+    }
+    this.catching = false;
     // запас ходов ~2 (200 мс) сглаживает неровную доставку; больше — догоняем быстрее, меньше — чуть медленнее
     const buf = avail / MP_TPT;
     const speed = buf > 4 ? Math.min(8, 1 + (buf - 4) * 0.5) : buf < 1 ? 0.92 : 1;
@@ -25418,6 +25439,7 @@ const Lockstep = {
       if (this.traces) { Det.trace = []; this.traces.set(n, Det.trace); if (this.traces.size > (this.traceMax || 40)) this.traces.delete(this.traces.keys().next().value); }
       const cmds = this.turns.get(n);
       if (cmds && cmds.length) Det.run(() => { for (const x of cmds) if (Array.isArray(x)) Cmd.exec(x[0] | 0, x[1]); });
+      if (this.onTurnStart) Det.run(() => this.onTurnStart(n)); // отладка (тесты)
     }
     Det.run(() => stepGame(MP_TICK));
     // средняя цена такта (мс) — для отладки производительности
@@ -25533,10 +25555,20 @@ const Online = {
   autoJoin() {
     if (this.autoDone) return;
     const code = this.pendingInvite();
-    if (!code) return;
+    if (!code) { this.lastRoom(); return; }
     this.autoDone = true;
     this.open();
     this.join(code);
+  },
+  // приложение открыли заново (в Telegram — кнопкой бота, без кода): тихо проверяем комнату, в которой
+  // игрок был последние 3 часа; комната жива — открываем её (идёт бой с его участием — возвращаемся в бой)
+  lastRoom() {
+    if (this.autoDone || !Net.available()) return;
+    let r = null;
+    try { r = JSON.parse(lsGet('gd.room', '') || 'null'); } catch (e) { r = null; }
+    if (!r || !/^[A-Z0-9]{4,8}$/.test(r.code || '') || !(Date.now() - (r.t || 0) < 3 * 3600e3)) return;
+    this.autoDone = true; this.silent = true;
+    this.connect(r.code, false);
   },
   wire() {
     const b = $('b-online');
@@ -25574,6 +25606,13 @@ const Online = {
       if (el.name === 'on-credits') Net.send({ t: 'set', s: { credits: +el.value } });
       else if (el.dataset.o) Net.send({ t: 'set', s: { [el.dataset.o]: el.checked } });
     });
+    // чат в бою: из меню (пауза в сети бой не останавливает)
+    $('pause-chat').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inp = $('pause-chat-in'), m = (inp.value || '').trim().slice(0, 140);
+      if (m && Net.ready()) { Net.send({ t: 'chat', m }); SFX.ui('click'); }
+      inp.value = '';
+    });
     $('on-chat-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const inp = $('on-chat-in'), m = (inp.value || '').trim().slice(0, 140);
@@ -25599,7 +25638,7 @@ const Online = {
     Net.on('end', () => { Lockstep.end(); if (this.phase === 'game' && G.state === 'playing') UI.notify('Бой завершён — все вернулись в комнату', 'info'); });
     Net.on('chat', (m) => this.onChat(m));
     Net.on('lost', () => { this.lostT = performance.now(); this.status('Связь потеряна — переподключение…'); });
-    Net.on('fail', (msg) => { this.msg(msg); this.phase = 'off'; this.renderEntry(); });
+    Net.on('fail', (msg) => { if (this.silent) { this.silent = false; this.phase = 'off'; return; } this.msg(msg); this.phase = 'off'; this.renderEntry(); });
   },
   isHost() { return !!this.room && this.room.me === this.room.host; },
   mySlot() { const r = this.room; if (!r) return -1; const me = r.mem.find((x) => x.id === r.me); return me ? me.slot : -1; },
@@ -25644,6 +25683,8 @@ const Online = {
   },
   onErr(m) {
     const t = m.m || 'Ошибка';
+    // тихая проверка прошлой комнаты: её уже нет — просто остаёмся в меню
+    if (this.silent && this.phase === 'connecting') { this.silent = false; lsSet('gd.room', ''); Net.close(true); this.phase = 'off'; this.status(''); return; }
     if (this.phase === 'connecting') {
       // такой код уже занят — создаём комнату с другим кодом
       if (this.wantCreate && m.code === 'exists') { this.connect(this.code6(), true); return; }
@@ -25655,6 +25696,8 @@ const Online = {
   onRoom(m) {
     const was = this.phase;
     this.room = m; this.code = m.code; this.wantCreate = false;
+    lsSet('gd.room', JSON.stringify({ code: m.code, t: Date.now() }));
+    if (this.silent) { this.silent = false; if (G.state === 'menu' && $('online').hidden) this.open(); }
     if (this.phase === 'connecting' || this.phase === 'off') this.phase = 'room';
     // переподключение во время боя: просим пропущенные ходы
     if (m.state === 'game' && Lockstep.on && m.gid === Lockstep.id && (was === 'game' || this.phase === 'game')) {
@@ -25662,8 +25705,11 @@ const Online = {
       if (!Lockstep.ended) Net.send({ t: 'resume', id: Lockstep.id, from: Lockstep.next + (Lockstep.sub ? 1 : 0) });
       return;
     }
-    // страницу перезагрузили во время боя: состояния боя нет — отдаём войска ИИ, ждём следующего боя в комнате
-    if (m.state === 'game' && m.playing && !(Lockstep.on && Lockstep.id === m.gid)) Net.send({ t: 'lobby' });
+    // страницу перезагрузили во время боя: состояния боя нет — просим бой с начала, игра его быстро догонит
+    if (m.state === 'game' && m.playing && !(Lockstep.on && Lockstep.id === m.gid)) {
+      if (!this.rejoinT || performance.now() - this.rejoinT > 10000) { this.rejoinT = performance.now(); this.status('Возвращаемся в бой…'); Net.send({ t: 'rejoin' }); }
+      return;
+    }
     if (m.state === 'lobby' && this.phase === 'game' && !Lockstep.running) this.phase = 'room';
     if (this.phase === 'room' && this.active && !$('online').hidden) this.renderRoom();
     else if (this.phase === 'room' && was === 'connecting') { this.open(); }
@@ -25833,6 +25879,7 @@ const Online = {
   },
   leaveGame() { this.backToRoom(); },
   leaveRoom() {
+    lsSet('gd.room', '');
     Net.send({ t: 'leave' });
     setTimeout(() => Net.close(true), 50);
     this.phase = 'off'; this.room = null; this.chat = [];
@@ -25841,22 +25888,28 @@ const Online = {
     this.msg('');
   },
   // ---------- в бою: связь, ожидание, рассинхронизация ----------
+  // в строке сверху — точка связи и задержка; предупреждения (ожидание, обрыв) — отдельной плашкой
   frame(dt) {
     if (this.phase !== 'game') return;
-    const el = this.mpHud || (this.mpHud = $('mp-hud'));
-    if (!el) return;
+    const el = this.mpHud || (this.mpHud = $('mp-hud')), ban = this.mpBan || (this.mpBan = $('mp-banner'));
+    if (!el || !ban) return;
     let t = '', cls = '';
-    if (!Net.ready()) { t = 'Нет связи с сервером — переподключение…'; cls = 'bad'; }
-    else if (this.waitNames) { t = 'Ждём: ' + this.waitNames.join(', '); cls = 'warn'; }
-    else if (Lockstep.running && Lockstep.stallT > 0.6) { t = 'Ожидание хода сервера…'; cls = 'warn'; }
+    if (Lockstep.catching) { const k = Lockstep.next / Math.max(1, Lockstep.next + Lockstep.available() / MP_TPT); t = 'Восстановление боя: ' + Math.floor(k * 100) + '%'; cls = 'warn'; }
+    else if (!Net.ready()) { t = 'Нет связи с сервером — переподключение…'; cls = 'bad'; }
+    else if (this.waitNames) { t = 'Ждём игрока: ' + this.waitNames.join(', '); cls = 'warn'; }
+    else if (Lockstep.running && Lockstep.stallT > 0.8) { t = 'Ожидание хода сервера…'; cls = 'warn'; }
     else if (Lockstep.running && Lockstep.available() > MP_TPT * 8) { t = 'Догоняем бой…'; cls = 'warn'; }
-    const ping = Net.rtt ? Net.rtt + ' мс' : '';
-    const sig = t + '|' + ping + '|' + cls;
+    const ping = Net.rtt ? Net.rtt + ' мс' : '…';
+    const show = G.state === 'playing' || G.state === 'over';
+    const sig = t + '|' + ping + '|' + cls + '|' + show;
     if (sig === this.sig) return;
     this.sig = sig;
-    el.hidden = G.state !== 'playing' && G.state !== 'over';
+    el.hidden = !show;
     el.dataset.s = cls;
-    el.innerHTML = '<span class="mp-dot"></span>' + (t ? '<span>' + esc(t) + '</span>' : '<span>Сеть</span>') + (ping ? '<b>' + ping + '</b>' : '');
+    el.innerHTML = '<span class="mp-dot"></span><b>' + ping + '</b>';
+    ban.hidden = !show || !t;
+    ban.dataset.s = cls;
+    ban.textContent = t;
   },
 };
 

@@ -19,6 +19,9 @@ const SERVE = new Set(['/index.html', '/favicon.ico']); // наружу — то
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 const rooms = new Map();
+// общий список открытых комнат (комната сама обновляет свою запись: io.publish)
+const directory = new Map();
+const listRooms = () => [...directory.values()].filter((r) => Date.now() - r.t < 60000).sort((a, b) => (a.state === 'lobby' ? 0 : 1) - (b.state === 'lobby' ? 0 : 1) || b.t - a.t).slice(0, 50);
 
 // ---------- статика ----------
 const server = http.createServer((req, res) => {
@@ -26,6 +29,11 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/config.json') {
     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     res.end(JSON.stringify({ tgLink: process.env.TG_LINK || '' }));
+    return;
+  }
+  if (url.pathname === '/rooms') {
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
+    res.end(JSON.stringify({ rooms: listRooms() }));
     return;
   }
   if (url.pathname === '/health') { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('ok ' + rooms.size); return; }
@@ -104,9 +112,10 @@ server.on('upgrade', (req, socket) => {
   const code = m[1].toUpperCase();
   let room = rooms.get(code);
   if (!room) {
-    // GD_FAST=1 — короткие сроки обрывов (для проверок)
-    const timing = process.env.GD_FAST ? { DROP_AFTER: 3000, LOBBY_GRACE: 3000, SILENT_MS: 2000, LOAD_WAIT: 8000, EMPTY_END: 4000 } : undefined;
-    room = new Room(code, { setInterval, clearInterval, now: () => Date.now(), timing, onEmpty: () => { if (rooms.get(code) === room) rooms.delete(code); } });
+    // GD_FAST=1 — короткие сроки обрывов (для проверок); GD_LAG / GD_DROP — свои сроки отставания и обрыва (мс),
+    // например для медленной тестовой машины с несколькими браузерами
+    const timing = process.env.GD_FAST ? { DROP_AFTER: +process.env.GD_DROP || 3000, LAG_DROP: +process.env.GD_LAG || 2500, LOBBY_GRACE: 3000, HOST_GRACE: 1500, LOAD_WAIT: 8000, EMPTY_END: 4000, PRES_GAP: 500, SPEC_DELAY: +process.env.GD_SPEC || 3000, PUB_GAP: 200 } : undefined;
+    room = new Room(code, { setInterval, clearInterval, now: () => Date.now(), timing, allowDbg: process.env.GD_TEST_DBG === '1', publish: (c, info) => { if (info) directory.set(c, info); else directory.delete(c); }, onEmpty: () => { if (rooms.get(code) === room) rooms.delete(code); directory.delete(code); } });
     rooms.set(code, room);
   }
   const conn = makeConn(socket, (t) => room.message(conn, t), (c) => room.closed(c));

@@ -27,6 +27,7 @@ const KINDS = ['open', 'easy', 'normal', 'hard', 'closed'];
 const FACTIONS = ['random', 'usa', 'rus', 'ger', 'irn', 'isr', 'chn', 'ind', 'ukr'];
 const COLORS = 10;
 const CREDITS = [2500, 5000, 10000];
+const POI_VALUES = ['off', 'refinery', 'comms', 'arsenal', 'random']; // «Точка интереса» (ТЗ v7)
 // сроки (мс); для проверок их можно сократить: io.timing
 const TIMING = {
   DROP_AFTER: 30000,  // нет связи 30 с — войсками командует ИИ
@@ -54,7 +55,7 @@ export class Room {
     this.host = 0;
     this.created = false;
     this.state = 'lobby';
-    this.s = { map: 'crossing', credits: 5000, sw: true, fog: true, dyn: true, cyc: true, dbg: false, pub: false, name: '' };
+    this.s = { map: 'crossing', credits: 5000, sw: true, fog: true, par: true, dyn: true, cyc: true, poi: 'off', dbg: false, pub: false, name: '' };
     this.pubT = -1e12; this.pubDirty = false; this.pubOn = false;
     this.slots = [];
     this.game = null;
@@ -208,7 +209,9 @@ export class Room {
     const s = msg.s;
     if (typeof s.map === 'string' && /^[a-z0-9_-]{1,24}$/.test(s.map)) this.s.map = s.map;
     if (CREDITS.includes(s.credits)) this.s.credits = s.credits;
-    for (const k of ['sw', 'fog', 'dyn', 'cyc', 'pub']) if (typeof s[k] === 'boolean') this.s[k] = s[k];
+    for (const k of ['sw', 'fog', 'par', 'dyn', 'cyc', 'pub']) if (typeof s[k] === 'boolean') this.s[k] = s[k];
+    // ТЗ v7, этап 8: «Точка интереса» — объект в центре карты
+    if (POI_VALUES.includes(s.poi)) this.s.poi = s.poi;
     // «Режим проверки» убран из сетевой игры (29.10); принимается только локальным тестовым сервером (GD_TEST_DBG=1)
     if (typeof s.dbg === 'boolean' && this.io.allowDbg) this.s.dbg = s.dbg;
     if (typeof s.name === 'string') this.s.name = clean(s.name, 28);

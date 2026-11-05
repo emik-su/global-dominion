@@ -5,8 +5,15 @@
 //  room.js: wss://<адрес>/ws/<КОД>. Бесплатного тарифа хватает на игры
 //  с друзьями. Ссылка на мини-приложение Telegram — переменная TG_LINK.
 // =====================================================================
-import { Room } from './room.js';
+import { Room, RANKED_MAPS } from './room.js';
+import { Accounts, doStore } from './accounts.js';
+import { handleApi, json } from './api.js';
+import { authConfigured } from './auth.js';
 import PAGE from './index.html';
+
+// Аккаунты (ТЗ v8): один общий объект AccountsDO с базой SQLite — профили, затем рейтинг и записи боёв
+const ACC_NAME = 'main';
+const accounts = (env) => env.ACCOUNTS.get(env.ACCOUNTS.idFromName(ACC_NAME));
 
 // Страница в байтах (кодируется один раз, а не на каждый запрос) и метка её версии:
 // повторный запуск в Telegram не качает игру заново, пока она не обновилась.
@@ -32,7 +39,14 @@ export default {
       return new Response(p.bytes, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', etag: p.tag } });
     }
     if (url.pathname === '/config.json') {
-      return new Response(JSON.stringify({ tgLink: env.TG_LINK || '' }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+      // auth — на сервере настроена проверка входа через Telegram (иначе все игроки — гости)
+      // rank — на сервере есть рейтинг (нужен вход через Telegram), rankMaps — карты рейтинговых боёв (название → число мест)
+      const auth = !!env.ACCOUNTS && authConfigured(env);
+      return new Response(JSON.stringify({ tgLink: env.TG_LINK || '', auth, rank: auth, rankMaps: RANKED_MAPS }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+    if (url.pathname.startsWith('/api/')) {
+      if (!env.ACCOUNTS) return json({ ok: false, why: 'noaccounts' }, 503);
+      return accounts(env).fetch(req);
     }
     const m = /^\/ws\/([A-Za-z0-9]{4,8})$/.exec(url.pathname);
     if (m) {
@@ -74,6 +88,13 @@ export class RoomDO {
         publish: (c, info) => {
           env.ROOMS.get(env.ROOMS.idFromName(DIR_NAME)).fetch('https://dir/dir/put', { method: 'POST', body: JSON.stringify({ code: c, info }) }).catch(() => {});
         },
+        // проверка входа через Telegram и профиль игрока — в объекте аккаунтов (без привязки ACCOUNTS игроки — гости)
+        auth: env.ACCOUNTS ? async (init) => (await accounts(env).fetch('https://acc/internal/login', { method: 'POST', body: init })).json() : undefined,
+        // итоги боёв и проверка перед рейтинговым боем — там же (ТЗ v8, этап 3)
+        report: env.ACCOUNTS ? async (p) => (await accounts(env).fetch('https://acc/internal/report', { method: 'POST', body: JSON.stringify(p) })).json() : undefined,
+        rankCheck: env.ACCOUNTS ? async (uids) => (await accounts(env).fetch('https://acc/internal/rankcheck', { method: 'POST', body: JSON.stringify(uids) })).json() : undefined,
+        // запись боя (ТЗ v8, этап 5) — туда же, байтами; номер боя — в адресе
+        saveRec: env.ACCOUNTS ? async (id, bytes) => (await accounts(env).fetch('https://acc/internal/replay?id=' + encodeURIComponent(id), { method: 'POST', body: bytes })).json() : undefined,
         onEmpty: () => { if (this.room === room) this.room = null; },
       });
       this.room = room;
@@ -107,4 +128,15 @@ export class RoomDO {
     list.sort((a, b) => (a.state === 'lobby' ? 0 : 1) - (b.state === 'lobby' ? 0 : 1) || b.t - a.t);
     return new Response(JSON.stringify({ rooms: list.slice(0, 50) }), { headers: { 'content-type': 'application/json' } });
   }
+}
+
+// Аккаунты: профили игроков и (следующие этапы) рейтинг и записи боёв. База SQLite внутри объекта;
+// схема обновляется сама при первом запуске новой версии (accounts.js: MIGRATIONS).
+export class AccountsDO {
+  constructor(state, env) {
+    this.env = env;
+    this.acc = null;
+    state.blockConcurrencyWhile(async () => { this.acc = new Accounts(doStore(state)); });
+  }
+  fetch(req) { return handleApi(this.acc, this.env, req); }
 }

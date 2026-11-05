@@ -588,7 +588,10 @@ body.replay #app.lsh #alerts { top: calc(var(--gt) + 130px); }
   border: 1px solid var(--line-hi); border-radius: 3px; -webkit-appearance: none; appearance: none; cursor: pointer; text-overflow: ellipsis;
 }
 .sel select:disabled { opacity: 0.4; cursor: default; }
-.sel select option { background: #1b2024; color: var(--ink); }
+/* Списки выбора на компьютере открываются системным окном, и оно может остаться белым даже при тёмной странице (color-scheme: dark у страницы есть):
+   светлый текст пунктов тогда не виден. Поэтому пункты и группы ВСЕХ списков получают свой непрозрачный тёмный фон. Раньше он был только у «.sel select»;
+   у списка карт боя в сетевой игре (#on-map) обёртки .sel нет — он и был белым. На сенсорных экранах список свой (Picker), системный не открывается. */
+select option, select optgroup { background-color: #1b2024; color: var(--ink); }
 #lobby-err { color: var(--warn); font-size: 13px; min-height: 1.2em; margin: 0; }
 .opts { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
 .opt { display: flex; flex-direction: column; gap: 6px; }
@@ -923,6 +926,79 @@ body:not(.touch) .touch-only { display: none; }
 .on-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 #on-code { width: 8.5em; text-transform: uppercase; letter-spacing: 0.28em; font-family: var(--f-mono); }
 .on-or { color: var(--ink-faint); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+/* аккаунт Telegram (ТЗ v8): кружок игрока — буква, поверх фото; плашка в меню сетевой игры */
+.ava { position: relative; display: inline-grid; place-items: center; flex: none; width: var(--s, 22px); height: var(--s, 22px); border-radius: 50%; overflow: hidden; vertical-align: middle; background: var(--pc, #59616a); color: #fff; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.35); }
+.ava > .al { font: 700 calc(var(--s, 22px) * 0.52)/1 system-ui, sans-serif; }
+.ptable .ava { margin-right: 6px; vertical-align: -5px; }
+.ava > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.acc-chip { display: flex; align-items: center; gap: 10px; max-width: 360px; padding: 7px 12px 7px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); border-radius: 3px; }
+.acc-chip[hidden] { display: none; }
+.acc-txt { display: flex; flex-direction: column; min-width: 0; }
+.acc-txt b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-txt small { font-size: 12px; color: var(--ink-faint); }
+/* рейтинг (ТЗ v8, этап 3): значок возле ника, переключатель «Рейтинговый бой», блок итога боя, вкладка «Рейтинг» */
+.rtb { flex: none; font-style: normal; font-family: var(--f-mono); font-size: 11px; line-height: 1.5; padding: 0 6px; border-radius: 9px; color: #10151a; background: var(--lc, #8a94a3); }
+.rtb.calib { color: var(--ink-dim); background: rgba(255,255,255,0.1); }
+.on-rank { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 3px; }
+.on-rank[hidden] { display: none; }
+.on-rank.on { border-color: rgba(232,170,62,0.55); background: rgba(232,170,62,0.06); }
+.on-rank .env-note.warn { color: var(--warn); }
+.tgl input:disabled { opacity: 0.45; cursor: default; }
+/* возврат в бой (ТЗ v8, этап 4): плашка в комнате, пока бой идёт без вас; подсказка в меню рейтингового боя */
+.on-return { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 12px; margin-bottom: 10px; background: rgba(232,170,62,0.1); border: 1px solid rgba(232,170,62,0.6); border-left: 3px solid var(--ore); border-radius: 3px; }
+.on-return[hidden] { display: none; }
+.on-return.out { background: rgba(255,255,255,0.04); border-color: var(--line-hi); border-left-color: var(--bad); }
+.onr-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.onr-txt b { font-size: 15px; }
+.onr-txt span { font-size: 14px; line-height: 1.4; color: var(--ink-dim); }
+.onr-txt .tm { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--ore); font-weight: 600; }
+.pause-rk { color: var(--ore); }
+.pause-rk[hidden] { display: none; }
+.end-rating { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--line-hi); border-left: 3px solid var(--ore); border-radius: 3px; }
+.end-rating[hidden] { display: none; }
+.end-rating h3 { margin: 0; font: 400 12px var(--f-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.end-rating p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
+.end-rating p.bad { color: var(--warn); }
+.rr-row { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 15px; }
+.rr-row.me { color: var(--ore); }
+.rr-row b { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr-o { flex: none; font-size: 12px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+.rr-n { margin-left: auto; flex: none; text-align: right; white-space: nowrap; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.rr-d.up { color: var(--ok); } .rr-d.dn { color: var(--bad); } .rr-d.z { color: var(--ink-faint); }
+.rr-lg { flex: none; font-size: 12px; color: var(--lc, var(--ink-dim)); }
+.rt-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.rt-card { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; padding: 12px 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 4px; }
+.rt-who { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.rt-who b { font-size: 18px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-who small { font-size: 12px; color: var(--ink-faint); }
+.rt-modes { display: flex; gap: 8px 20px; flex-wrap: wrap; }
+.rt-mode { display: flex; flex-direction: column; gap: 1px; min-width: 112px; }
+.rt-mode > span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.rt-mode > b { font: 400 28px/1.1 var(--f-display); color: var(--lc, var(--ink)); }
+.rt-mode > small { font-size: 12px; color: var(--ink-dim); }
+#rt-list { display: flex; flex-direction: column; gap: 4px; }
+.rt-row { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 7px 10px; font: inherit; color: var(--ink); text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
+.rt-row:hover { background: rgba(255,255,255,0.07); }
+.rt-row.me { border-color: rgba(232,170,62,0.6); }
+.rt-pos { flex: none; width: 28px; text-align: right; font-family: var(--f-mono); color: var(--ink-faint); }
+.rt-row b { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-lg { flex: none; font-size: 12px; color: var(--lc, var(--ink-dim)); }
+.rt-r { flex: none; width: 48px; text-align: right; font-family: var(--f-mono); }
+.rt-wl { flex: none; width: 52px; text-align: right; white-space: nowrap; font-family: var(--f-mono); font-size: 12px; color: var(--ink-faint); }
+#app.w560 .rt-wl { display: none; }
+.rt-h { margin: 10px 0 0; font: 400 12px var(--f-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); }
+.rt-h button { margin-left: 10px; }
+.rt-mr { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; padding: 7px 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-left: 3px solid var(--ink-faint); border-radius: 3px; font-size: 14px; }
+.rt-mr.win { border-left-color: var(--ok); } .rt-mr.loss, .rt-mr.quit, .rt-mr.early { border-left-color: var(--bad); } .rt-mr.draw { border-left-color: var(--warn); }
+.rt-mr time { margin-left: auto; font-family: var(--f-mono); font-size: 11px; color: var(--ink-faint); }
+#rt-recent { display: flex; flex-direction: column; gap: 4px; }
+/* запись боя (ТЗ v8, этап 5): «▶ Смотреть» в строке боя, «Показать ещё» под списком, «▶ Запись боя» в окне итога */
+.rt-mr .rt-play { margin: -3px 0 -3px auto; padding: 5px 12px; font-size: 13px; align-self: center; color: var(--ore); border-color: rgba(232,170,62,0.5); }
+.rt-mr .rt-play + time { margin-left: 0; }
+.rt-more { align-self: center; margin: 6px 0 2px; }
+.rt-more[disabled], .rt-play[disabled] { opacity: 0.55; cursor: default; }
+.end-rating .rt-play { align-self: flex-start; margin-top: 4px; color: var(--ore); border-color: rgba(232,170,62,0.5); }
+.on-field input[readonly] { color: var(--ink-dim); border-style: dashed; }
 .on-msg { min-height: 1.3em; margin: 0; color: var(--warn); font-size: 14px; }
 .on-note { margin: 0; padding: 10px 12px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); background: rgba(240,192,74,0.07); border: 1px solid rgba(240,192,74,0.3); border-radius: 3px; max-width: 70ch; }
 .on-adv summary { cursor: pointer; color: var(--ink-faint); font-size: 13px; letter-spacing: 0.08em; }
@@ -995,6 +1071,7 @@ body:not(.touch) .touch-only { display: none; }
 #pause-chat { display: flex; gap: 8px; margin: 10px 0 4px; }
 #pause-chat[hidden] { display: none; }
 #pause-chat input { flex: 1; min-width: 0; min-height: 38px; box-sizing: border-box; padding: 6px 11px; font: inherit; font-size: 16px; color: var(--ink); background: rgba(255,255,255,0.05); border: 1px solid var(--line-hi); border-radius: 3px; }
+#mp-hud .mp-rk { font-style: normal; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0 5px; border-radius: 2px; color: var(--ore); border: 1px solid rgba(232,170,62,0.5); }
 #mp-hud .mp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); flex: none; }
 #mp-hud[data-s="warn"] .mp-dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
 #mp-hud[data-s="warn"] span { color: var(--warn); }
@@ -1101,6 +1178,7 @@ body:not(.touch) .touch-only { display: none; }
         <button type="button" role="tab" id="tab-maps" data-tab="maps" aria-controls="pg-maps" aria-selected="false" tabindex="-1">Карты <b id="mn-mapcount"></b></button>
         <button type="button" role="tab" id="tab-factions" data-tab="factions" aria-controls="pg-factions" aria-selected="false" tabindex="-1">Фракции</button>
         <button type="button" role="tab" id="tab-history" data-tab="history" aria-controls="pg-history" aria-selected="false" tabindex="-1">История</button>
+        <button type="button" role="tab" id="tab-rating" data-tab="rating" aria-controls="pg-rating" aria-selected="false" tabindex="-1">Рейтинг</button>
         <button type="button" role="tab" id="tab-settings" data-tab="settings" aria-controls="pg-settings" aria-selected="false" tabindex="-1">Настройки</button>
         <button type="button" role="tab" id="tab-guide" data-tab="guide" aria-controls="pg-guide" aria-selected="false" tabindex="-1">Справочник</button>
         <button type="button" role="tab" id="tab-help" data-tab="help" aria-controls="pg-help" aria-selected="false" tabindex="-1">Управление</button>
@@ -1216,6 +1294,7 @@ body:not(.touch) .touch-only { display: none; }
           <label class="tgl" for="opt-post0" title="HDR-кадр: свечение огня, взрывов, выстрелов и огней, цветокоррекция и виньетка. Требует мощной видеокарты">Свечение и цветокоррекция<input type="checkbox" id="opt-post0"></label>
           <label class="tgl" for="opt-precip0" title="Капли дождя и хлопья снега на экране. Сама погода — видимость, проходимость, ветер, гроза — действует и без них">Дождь и снег на экране<input type="checkbox" id="opt-precip0"></label>
           <label class="tgl touch-only" for="opt-land0">Горизонтальный экран<input type="checkbox" id="opt-land0"></label>
+          <label class="tgl" for="opt-hqnames0" title="Над штабами игроков — ник и маленькое фото из Telegram (у игроков с аккаунтом). Выключено — только ники союзников, как раньше">Ники и фото над штабами<input type="checkbox" id="opt-hqnames0"></label>
           <div class="opt"><label class="tgl" for="opt-voice0" title="Голосом: «Постройка завершена», «Приближение вражеских войск», «Наша база атакована», «Недостаточно энергии», тайное оружие и другие события">Голосовые оповещения<input type="checkbox" id="opt-voice0"></label>
             <small class="voice-info"></small><label class="sel voice-sel" hidden><span class="vh">Голос</span><select id="opt-vname0"></select></label><button type="button" class="btn-ghost btn-sm" id="b-voice-test">Проверить голос</button></div>
           <div class="opt"><span>Кнопки на экране</span><button type="button" class="btn-ghost btn-sm" id="b-hud0">Расставить кнопки…</button><small>Перетащите быстрые кнопки боя пальцем в удобное место, скройте лишние, выберите размер.</small></div>
@@ -1225,6 +1304,20 @@ body:not(.touch) .touch-only { display: none; }
       <section class="mn-page" id="pg-history" role="tabpanel" aria-labelledby="tab-history" data-page="history" hidden>
         <div class="hist-head"><p class="brief" id="hist-sum"></p><button type="button" class="btn-ghost hist-clear" id="hist-clear" hidden>Очистить историю</button></div>
         <div id="hist-list"></div>
+      </section>
+      <section class="mn-page" id="pg-rating" role="tabpanel" aria-labelledby="tab-rating" data-page="rating" hidden>
+        <p class="brief" id="rt-brief">Рейтинг считается за рейтинговые бои в сетевой игре: победа над сильным игроком даёт больше очков, поражение от слабого отнимает больше. Играть в них могут только вошедшие через Telegram.</p>
+        <div id="rt-me"></div>
+        <div class="rt-bar">
+          <div class="seg seg-sm" role="radiogroup" aria-label="Режим рейтинга" id="rt-mode">
+            <label><input type="radio" name="rt-mode" value="duel" checked><span>Дуэль 1×1</span></label>
+            <label><input type="radio" name="rt-mode" value="multi"><span>Мультиплеер</span></label>
+          </div>
+          <button type="button" class="btn-ghost btn-sm" id="rt-refresh">Обновить</button>
+        </div>
+        <p class="env-note" id="rt-note"></p>
+        <div id="rt-list" aria-live="polite"></div>
+        <div id="rt-recent"></div>
       </section>
       <section class="mn-page" id="pg-guide" role="tabpanel" aria-labelledby="tab-guide" data-page="guide" hidden>
         <p class="brief">Для чего каждое здание, что даёт каждое исследование и с чего начать. Названия — для вашей державы (выбирается во вкладке «Бой»). В бою эти карточки открываются у кнопок: наведите мышь или удерживайте кнопку пальцем; исследования на сенсорном экране сначала показывают карточку, изучение — кнопкой «Изучить».</p>
@@ -1293,7 +1386,9 @@ body:not(.touch) .touch-only { display: none; }
       <section class="mn-page" id="on-entry">
         <p class="brief">Играйте по сети с друзьями из любой точки мира — <b>друг против друга</b> или <b>вместе против ИИ</b>. Создайте комнату и отправьте приглашение: друг откроет ссылку и сразу окажется в комнате. Свободные места можно отдать ИИ.</p>
         <p class="on-note" id="on-noserver" hidden>Сетевая игра работает на сайте игры, где запущен её сервер (и в Telegram). Если сервер уже размещён, укажите его адрес ниже в разделе «Сервер».</p>
-        <label class="on-field"><span>Ваш никнейм</span><input type="text" id="on-nick" maxlength="16" enterkeyhint="done" spellcheck="false" autocomplete="nickname" placeholder="Командир"></label>
+        <div class="acc-chip" id="on-acc" hidden><span id="on-acc-ava"></span><span class="acc-txt"><b id="on-acc-name"></b><small id="on-acc-sub">Аккаунт Telegram</small></span></div>
+        <p class="on-note" id="on-acc-note" hidden></p>
+        <label class="on-field"><span id="on-nick-l">Ваш никнейм</span><input type="text" id="on-nick" maxlength="16" enterkeyhint="done" spellcheck="false" autocomplete="nickname" placeholder="Командир"></label>
         <div class="on-row">
           <button type="button" class="btn-main" id="on-create">Создать комнату</button>
           <span class="on-or">или</span>
@@ -1308,6 +1403,10 @@ body:not(.touch) .touch-only { display: none; }
         <details class="on-adv"><summary>Сервер</summary><input type="url" id="on-server" placeholder="https://ваш-сервер.workers.dev" spellcheck="false" autocomplete="off"><small>Обычно не нужно: на сайте игры и в Telegram сервер подключается сам. Поле — для игры с другого адреса.</small></details>
       </section>
       <section class="mn-page" id="on-room" hidden>
+        <div class="on-return" id="on-return" role="status" hidden>
+          <div class="onr-txt"><b id="on-return-h"></b><span id="on-return-p"></span></div>
+          <button type="button" class="btn-main" id="on-return-go">Вернуться в бой</button>
+        </div>
         <div class="on-top">
         <div class="on-code-row">
           <div><span class="eyebrow" id="on-room-name">Код комнаты</span><b id="on-room-code">—</b></div>
@@ -1323,6 +1422,11 @@ body:not(.touch) .touch-only { display: none; }
             <label id="on-map-row"><span class="vh">Карта боя</span><select id="on-map"></select></label>
           </div>
         </div>
+        </div>
+        <div class="end-rating" id="on-result" hidden></div>
+        <div class="on-rank" id="on-rank" hidden>
+          <label class="tgl" for="on-o-rank" title="Бой идёт на фиксированных правилах, только между людьми, и меняет рейтинг участников">Рейтинговый бой<input type="checkbox" id="on-o-rank" data-o="rank"></label>
+          <p class="env-note" id="on-rank-note"></p>
         </div>
         <section class="lsec" aria-labelledby="h-on-slots">
           <h2 id="h-on-slots">Игроки · номер — место на карте <button type="button" id="on-spec">Стать зрителем</button></h2>
@@ -1371,6 +1475,7 @@ body:not(.touch) .touch-only { display: none; }
     <div class="dialog glass ticks" role="dialog" aria-modal="true" aria-labelledby="pause-title">
       <h2 id="pause-title">Пауза</h2>
       <p class="pause-wx" id="pause-wx"></p>
+      <p class="pause-wx pause-rk" id="pause-rk" hidden></p>
       <div class="cols">
         <div class="toggles">
           <label class="tgl" for="opt-fog">Туман войны<input type="checkbox" id="opt-fog"></label>
@@ -1381,6 +1486,7 @@ body:not(.touch) .touch-only { display: none; }
           <label class="tgl" for="opt-precip" title="Капли дождя и хлопья снега на экране. Сама погода — видимость, проходимость, ветер, гроза — действует и без них">Дождь и снег на экране<input type="checkbox" id="opt-precip"></label>
           <label class="tgl" for="opt-mmrot" title="Мини-карта поворачивается вместе с камерой шагом 90°; метка «С» — север карты">Мини-карта поворачивается с камерой<input type="checkbox" id="opt-mmrot"></label>
           <label class="tgl touch-only" for="opt-land">Горизонтальный экран<input type="checkbox" id="opt-land"></label>
+          <label class="tgl" for="opt-hqnames" title="Над штабами игроков — ник и маленькое фото из Telegram. Выключено — только ники союзников">Ники и фото над штабами<input type="checkbox" id="opt-hqnames"></label>
           <label class="tgl" for="opt-voice" title="Голосом — события боя">Голосовые оповещения<input type="checkbox" id="opt-voice"></label>
           <label class="tgl" for="opt-dev" title="Счётчики, сеть, журнал сбоев, инструменты проверки (F9)">Панель разработчика<input type="checkbox" id="opt-dev"></label>
           <button type="button" class="btn-ghost touch-only" id="b-flip">Перевернуть экран на 180°</button>
@@ -1453,6 +1559,7 @@ body:not(.touch) .touch-only { display: none; }
     <div class="dialog glass ticks" role="dialog" aria-modal="true" aria-labelledby="end-title">
       <h2 id="end-title">Победа</h2>
       <p id="end-sub"></p>
+      <div class="end-rating" id="end-rating" hidden></div>
       <div class="table-wrap" id="end-stats"></div>
       <div class="row">
         <button type="button" class="btn-main" id="b-again">В лобби</button>
@@ -1478,7 +1585,7 @@ return {ACESFilmicToneMapping:et,AddEquation:y,AddOperation:J,AdditiveAnimationB
 </script>
 <script>
 function bootGame(THREE, HOT) {
-const GD_BUILD = 'ab060facf2';
+const GD_BUILD = '8423c228a0';
 // ---- 00_core.js ----
 // =====================================================================
 //  GLOBAL DOMINION — браузерная 3D RTS на Three.js (прежнее название — «Стальной фронт»)
@@ -1557,7 +1664,7 @@ function ridged(noise, x, y) { return 1 - Math.abs(fbm(noise, x, y, 3)); }
 const Settings = {
   map: 'hexagon', quality: 'auto', muted: false, volume: 0.7, volRain: 1, volAir: 1, volVoice: 1, voiceName: '', fpsCap: 0, hud: null, edgeScroll: true, fog: true, speed: 1,
   credits: 5000, superweapons: true, parallel: true, poi: 'off', slots: null, landscape: true, rotFlip: false, cine: true, mmRotate: true, env: null, post: null, precip: true, nick: '', myColor: -1,
-  uiScale: 0, res: 'auto', dev: false, voice: true, // dev — панель разработчика; размер интерфейса (0 — авто) и чёткость 3D-кадра ('auto' — по качеству графики, число — доля родного разрешения)
+  uiScale: 0, res: 'auto', dev: false, voice: true, hqNames: true, // hqNames — ники и фото игроков над штабами (ТЗ v8); dev — панель разработчика; размер интерфейса (0 — авто) и чёткость 3D-кадра ('auto' — по качеству графики, число — доля родного разрешения)
   load() {
     try {
       const raw = localStorage.getItem('steelfront2.settings');
@@ -1569,7 +1676,7 @@ const Settings = {
       localStorage.setItem('steelfront2.settings', JSON.stringify({
         map: this.map, quality: this.quality, muted: this.muted, volume: this.volume, volRain: this.volRain, volAir: this.volAir, volVoice: this.volVoice, voiceName: this.voiceName, fpsCap: this.fpsCap, hud: this.hud, edgeScroll: this.edgeScroll,
         fog: this.fog, speed: this.speed, credits: this.credits, superweapons: this.superweapons, parallel: this.parallel, poi: this.poi, slots: this.slots,
-        landscape: this.landscape, rotFlip: this.rotFlip, cine: this.cine, mmRotate: this.mmRotate, env: this.env, post: this.post, precip: this.precip, nick: this.nick, myColor: this.myColor, uiScale: this.uiScale, res: this.res, dev: this.dev, voice: this.voice,
+        landscape: this.landscape, rotFlip: this.rotFlip, cine: this.cine, mmRotate: this.mmRotate, env: this.env, post: this.post, precip: this.precip, nick: this.nick, myColor: this.myColor, uiScale: this.uiScale, res: this.res, dev: this.dev, voice: this.voice, hqNames: this.hqNames,
       }));
     } catch (e) { /* ignore */ }
   },
@@ -17401,7 +17508,7 @@ function makePlayer(id, slot, cfg) {
   const nm = cleanName(cfg.name) || (cfg.human ? 'Командир' : C.name);
   return {
     id, slot, color: ci, name: cfg.human ? 'Вы' : nm, cname: nm, hex: C.hex, css: C.css, col: new THREE.Color(C.hex),
-    faction: factionId(cfg.faction) || 'usa', ally: cfg.team || 0, ai: cfg.ai || null, human: !!cfg.human,
+    faction: factionId(cfg.faction) || 'usa', ally: cfg.team || 0, ai: cfg.ai || null, human: !!cfg.human, uid: cfg.uid | 0, av: !!cfg.av, // uid/av — аккаунт и фото (ТЗ v8)
     credits: cfg.credits, prod: 0, use: 0, lowPower: false, prodSpeed: 1, buildQueue: [], alive: true, defeatedAt: -1,
     stats: { unitsBuilt: 0, unitsLost: 0, kills: 0, buildingsLost: 0, buildingsKilled: 0, mined: 0, hacked: 0, oil: 0 },
     alertBase: -99, alertUnits: -99, base: { x: s.x, z: s.z }, facing: s.face,
@@ -29646,7 +29753,10 @@ const UI = {
     const fogEl = $('opt-fog'); if (fogEl) { fogEl.disabled = G.mp; if (G.mp) fogEl.checked = Fog.enabled; const l = fogEl.closest('.tgl'); if (l) l.hidden = G.mp; }
     document.querySelectorAll('[name="speed"]').forEach((r) => { r.disabled = G.mp; });
     const sp = $('lbl-speed'); if (sp && sp.parentElement) sp.parentElement.hidden = G.mp;
-    const rb = $('b-restart'); if (rb) rb.textContent = G.mp ? 'Покинуть бой' : 'В главное меню';
+    const rb = $('b-restart'); if (rb) { rb.textContent = G.mp ? 'Покинуть бой' : 'В главное меню'; rb.classList.remove('armed'); }
+    // рейтинговый бой: чем грозит выход и сколько времени на возвращение
+    const rk = $('pause-rk'), rkOn = !!(G.mp && Online.ranked && !G.observer && !G.watchOnly && G.state === 'playing');
+    if (rk) { rk.hidden = !rkOn; rk.textContent = rkOn ? 'Рейтинговый бой. Выход до 3-й минуты — штраф и пауза в рейтинговых боях, позже — поражение. Вышли или вылетели — вернуться в бой можно в течение 4 минут.' : ''; }
     const pc = $('pause-chat'); if (pc) pc.hidden = true; // чат боя — своё окно (24b_chat.js)
     const cb = $('b-chat2'); if (cb) cb.hidden = !G.mp;
     const vo = $('opt-voice'); if (vo) vo.checked = Settings.voice !== false;
@@ -29660,7 +29770,7 @@ const UI = {
       const st = P.alive ? (end && G.state === 'over' ? '<span class="ok">Выстоял</span>' : '<span class="ok">В строю</span>') : '<span class="bad">' + (P.surrendered ? 'Сдался ' : 'Выбыл ') + fmtTime(P.defeatedAt) + '</span>';
       const who = P.id === G.human ? 'Вы' : P.human ? 'Игрок' : P.dropped ? 'ИИ вместо игрока' : (DIFFICULTY[P.ai] || DIFFICULTY.normal).label;
       const s = P.stats;
-      return '<tr' + (P.id === G.human ? ' class="me"' : '') + '><th scope="row"><span class="pdot" style="--pc:' + P.css + '"></span>' + esc(P.cname) + '<small>' + esc(who) + '</small></th>' +
+      return '<tr' + (P.id === G.human ? ' class="me"' : '') + '><th scope="row"><span class="pdot" style="--pc:' + P.css + '"></span>' + (P.uid > 0 ? Account.ava(P.uid, P.cname, P.av, 18, P.css) : '') + esc(P.cname) + '<small>' + esc(who) + '</small></th>' +
         '<td><canvas class="flag" data-flag="' + P.faction + '" width="36" height="24" aria-hidden="true"></canvas>' + esc(FACTIONS[P.faction].name) + '</td>' +
         '<td>' + esc(this.teamLabel(P)) + '</td><td>' + st + '</td>' +
         (end ? '<td class="n">' + s.unitsBuilt + '</td><td class="n">' + s.kills + '</td><td class="n">' + s.unitsLost + '</td><td class="n">' + s.buildingsKilled + '</td><td class="n">' + Math.round(s.mined) + '</td>' : '') + '</tr>';
@@ -31837,22 +31947,45 @@ const Marks = {
       c.restore();
     });
   },
-  // подпись над штабом союзника
+  // подпись над штабом: у игрока с аккаунтом (ТЗ v8) слева маленький кружок — фото Telegram (или буква, пока фото нет)
+  // в рамке цвета игрока; у гостя, ИИ и при выключенной настройке — полоска цвета, как раньше
   nameLabel(P, txt) {
-    const key = 'nm' + P.id + '|' + txt + '|' + P.css, d = UI.dpr || 1, ck = key + '@' + d;
+    const ava = Settings.hqNames !== false && P.uid > 0;
+    let st = 0;
+    if (ava && P.av) { Account.img(P.uid); st = Account.imgState(P.uid); } else if (ava) st = 2;
+    const key = 'nm' + P.id + '|' + txt + '|' + P.css + (ava ? '|a' + st : ''), d = UI.dpr || 1, ck = key + '@' + d;
     if (this.cache[ck]) return this.cache[ck];
     const font = '600 13px "PT Sans Narrow", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif';
     const m = document.createElement('canvas').getContext('2d');
     m.font = font;
-    const tw = Math.ceil(m.measureText(txt).width), w = tw + 24, h = 22;
+    const tw = Math.ceil(m.measureText(txt).width), lead = ava ? 27 : 15, w = tw + lead + 9, h = 22;
     return this.sprite(key, w, h, (c) => {
       const r = 4;
       c.fillStyle = 'rgba(9,13,15,0.66)';
       c.beginPath(); c.moveTo(r, 0); c.lineTo(w - r, 0); c.quadraticCurveTo(w, 0, w, r); c.lineTo(w, h - r); c.quadraticCurveTo(w, h, w - r, h); c.lineTo(r, h); c.quadraticCurveTo(0, h, 0, h - r); c.lineTo(0, r); c.quadraticCurveTo(0, 0, r, 0); c.closePath(); c.fill();
       c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.stroke();
-      c.fillStyle = P.css; c.fillRect(6, 5, 3, h - 10);
-      c.font = font; c.textBaseline = 'middle'; c.fillStyle = '#f1ede2';
-      c.fillText(txt, 15, h / 2 + 0.5);
+      if (ava) {
+        const cx = 12, cy = h / 2, rad = 8;
+        c.save();
+        c.beginPath(); c.arc(cx, cy, rad, 0, TAU); c.clip();
+        const im = st === 1 ? Account.imgs.get(P.uid).im : null;
+        let drawn = false;
+        if (im) {
+          const s0 = Math.min(im.naturalWidth, im.naturalHeight);
+          try { c.drawImage(im, (im.naturalWidth - s0) / 2, (im.naturalHeight - s0) / 2, s0, s0, cx - rad, cy - rad, rad * 2, rad * 2); drawn = true; } catch (e) { /* холст не принял картинку — останется буква */ }
+        }
+        if (!drawn) {
+          c.fillStyle = P.css; c.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+          c.fillStyle = '#fff'; c.font = '700 11px system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.fillText((Array.from(txt)[0] || '?').toUpperCase(), cx, cy + 0.5);
+        }
+        c.restore();
+        c.strokeStyle = P.css; c.lineWidth = 1.7; c.beginPath(); c.arc(cx, cy, rad, 0, TAU); c.stroke();
+      } else {
+        c.fillStyle = P.css; c.fillRect(6, 5, 3, h - 10);
+      }
+      c.font = font; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillStyle = '#f1ede2';
+      c.fillText(txt, lead, h / 2 + 0.5);
     });
   },
   onScreen(m) { return !_sp.behind && _sp.x > -m && _sp.y > -m && _sp.x < R.width + m && _sp.y < R.height + m; },
@@ -31907,7 +32040,9 @@ const Marks = {
       if (!b.alive || b.type !== 'hq' || !b.built) continue;
       const P = Players[b.team];
       if (!P) continue;
-      if (VIEWER >= 0 ? b.team === VIEWER || isEnemy(VIEWER, b.team) : false) continue;
+      // раньше — только штабы союзников (у зрителей — всех). Теперь, пока включено «Фото и ники над штабами», подписаны
+      // штабы всех игроков-людей, в том числе свой и противников (ТЗ v8); ИИ-противников, как и прежде, не подписываем
+      if (VIEWER >= 0 && (b.team === VIEWER || isEnemy(VIEWER, b.team)) && !(Settings.hqNames !== false && P.human)) continue;
       if (enemyHidden(b)) continue;
       toScreen(b.x, b.y + b.heightTop() + 1.4, b.z, _sp);
       if (!this.onScreen(60)) continue;
@@ -32315,6 +32450,7 @@ const Lobby = {
     if (id === 'factions') this.pv = -1;
     if (id === 'guide') this.renderGuide();
     if (id === 'history') History.render();
+    if (id === 'rating') Rating.render();
     if (id === 'maps') { const c = document.querySelector('.mapcard[aria-pressed="true"]'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'nearest' }); }
   },
   // поиск по названию, описанию и местности; фильтры по числу игроков и размеру
@@ -32889,7 +33025,7 @@ const RP_ICON = {
 };
 const Replay = {
   d: null, tick: 0, evi: 0, hsi: 0, acc: 0, speed: 1, paused: false, ended: false, catching: false, seekTo: -1,
-  bad: -1, checked: 0, endOk: null, el: null, uiT: 0, busy: false, warnShown: false,
+  bad: -1, checked: 0, endOk: null, el: null, uiT: 0, busy: false, warnShown: false, back: 'history', loading: false,
   active() { return !!G.replay; },
   rate() { return this.paused || this.ended || this.catching ? 0 : this.speed; },
   total() { return this.d ? this.d.ticks : 0; },
@@ -32920,6 +33056,36 @@ const Replay = {
       if (!keep) UI.notify('Повтор боя: ' + (d.map || '') + ' · ' + History.when(d.t), 'info');
       return true;
     } finally { this.busy = false; }
+  },
+  // ---------- запись боя с сервера (ТЗ v8, этап 5) ----------
+  // Запись собрана сервером из приказов, которые он разослал игрокам, и хешей состояния, которые прислали игры; хранится 30 суток.
+  // Читается по номеру боя (из «Рейтинг → бои» и из окна итога); считается заново так же, как любой повтор, и сверяется по хешам.
+  async fetchRemote(id) {
+    const base = Account.http();
+    if (!base) { UI.notify('Запись боя берётся с сервера сетевой игры — здесь он не подключён', 'warn'); return null; }
+    let r;
+    try { r = await fetch(base + '/api/replay/' + encodeURIComponent(id), { cache: 'no-store' }); } catch (e) { r = null; }
+    if (!r) { UI.notify('Не удалось загрузить запись боя — проверьте связь и повторите', 'warn'); return null; }
+    if (r.status === 404) { UI.notify('Записи этого боя нет: срок хранения (30 суток) вышел или запись не сохранилась', 'warn'); return null; }
+    let d = null;
+    try { if (r.ok) d = await r.json(); } catch (e) { d = null; }
+    if (!d || d.v !== REPLAY_V || !d.cfg || !Array.isArray(d.ev) || !Array.isArray(d.hs) || !MAPS[d.cfg.map]) { UI.notify('Запись боя повреждена или сделана в несовместимой версии', 'warn'); return null; }
+    if (!d.map) d.map = MAPS[d.cfg.map].name;
+    return d;
+  },
+  // back — куда вернуться по кнопке «выйти»: 'rating' (вкладка «Рейтинг»), 'room' (комната сетевой игры), по умолчанию — «История»
+  async playRemote(id, back) {
+    if (this.busy || this.loading) return false;
+    this.loading = true;
+    let d = null;
+    try { d = await this.fetchRemote(id); } finally { this.loading = false; }
+    if (!d) return false;
+    // из окна итога сетевого боя сначала выходим из него (бой окончен): так же, как «В лобби»
+    if (G.mp && Online.phase === 'game') Online.backToRoom();
+    if (d.b && d.b !== GD_BUILD) UI.notify('Запись сделана в другой версии игры — повтор может идти иначе, чем бой', 'info');
+    const ok = await this.play(d);
+    if (ok) this.back = back || 'history';
+    return ok;
   },
   frame(dt, k) {
     if (this.seekTo >= 0) { this.seekStep(); return; }
@@ -33007,9 +33173,12 @@ const Replay = {
   },
   setSpeed(s) { if (REPLAY_SPEEDS.includes(s)) { this.speed = s; this.render(true); } },
   exit() {
+    const back = this.back;
+    this.back = 'history';
     this.stop();
     showMenu();
-    Lobby.showTab('history', true);
+    if (back === 'room' && Online.phase !== 'off') Online.open();
+    else Lobby.showTab(back === 'rating' ? 'rating' : 'history', true);
   },
   // выход из просмотра (в меню или в новую партию)
   stop() {
@@ -33282,6 +33451,7 @@ function showEnd() {
     $('b-watch').textContent = 'Осмотреть поле боя';
     $('b-again').textContent = G.mp ? 'В комнату' : 'В лобби';
     $('b-replay').hidden = true;
+    $('end-rating').hidden = true;
     UI.show('end');
     return;
   }
@@ -33296,6 +33466,7 @@ function showEnd() {
   $('b-watch').textContent = win ? 'Осмотреть поле боя' : 'Наблюдать за боем';
   $('b-again').textContent = G.mp ? 'В комнату' : 'В лобби';
   $('b-replay').hidden = G.mp || !Rec.d;
+  if (G.mp) Online.paintEnd(); else $('end-rating').hidden = true; // рейтинг (ТЗ v8): итог рейтингового боя или пояснение, пока бой идёт
   UI.show('end');
 }
 // наблюдение после поражения или сдачи. В сети, пока жив союзник, — глазами своей стороны (туман войны
@@ -33325,9 +33496,10 @@ function stepGame(dt) {
   Vis.update(dt);
   if (G.state === 'over' && !G.finalShown) {
     const al = Players.filter((p) => p.alive);
-    if (al.length && al.every((p) => !isEnemy(al[0].id, p.id))) {
+    // бой окончен: остались одни союзники — или не осталось никого (ничья: последние базы пали одновременно)
+    if (!al.length || al.every((p) => !isEnemy(al[0].id, p.id))) {
       G.finalShown = true;
-      UI.notify('Бой окончен: ' + (al.length === 1 ? 'побеждает ' + (al[0].id === G.human ? 'ваша армия' : al[0].cname + ' (' + FACTIONS[al[0].faction].name + ')') : 'побеждает союз «Команда ' + al[0].ally + '»'), 'ok');
+      UI.notify('Бой окончен: ' + (!al.length ? 'ничья, все базы уничтожены' : al.length === 1 ? 'побеждает ' + (al[0].id === G.human ? 'ваша армия' : al[0].cname + ' (' + FACTIONS[al[0].faction].name + ')') : 'побеждает союз «Команда ' + al[0].ally + '»'), 'ok');
       if (G.mp) Online.onBattleOver();
     }
   }
@@ -33430,7 +33602,15 @@ function frame(now) {
 
 function wireMenus() {
   $('b-resume').addEventListener('click', () => UI.togglePause());
-  $('b-restart').addEventListener('click', () => { G.paused = false; $('pause').hidden = true; if (G.state === 'playing' && !G.watchOnly) History.record('left'); if (G.mp) Online.leaveGame(); else showMenu(); });
+  $('b-restart').addEventListener('click', (e) => {
+    const b = e.currentTarget;
+    // рейтинговый бой: «Покинуть бой» — двумя нажатиями (выход до 3-й минуты наказывается)
+    if (G.mp && Online.ranked && !G.observer && !G.watchOnly && G.state === 'playing') {
+      if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Точно покинуть бой?'; SFX.ui('click'); setTimeout(() => { if (b.classList.contains('armed')) { b.classList.remove('armed'); b.textContent = 'Покинуть бой'; } }, 3000); return; }
+      b.classList.remove('armed');
+    }
+    G.paused = false; $('pause').hidden = true; if (G.state === 'playing' && !G.watchOnly) History.record('left'); if (G.mp) Online.leaveGame(); else showMenu();
+  });
   // история: «Очистить» — двумя нажатиями
   $('hist-clear').addEventListener('click', (e) => {
     const b = e.currentTarget;
@@ -33450,6 +33630,7 @@ function wireMenus() {
   $('b-flip').addEventListener('click', () => { Settings.rotFlip = !Settings.rotFlip; Settings.save(); onViewChange(); SFX.ui('click'); });
   wireDisplayOpts();
   wireVoiceOpts();
+  wireHqNames();
   wireVolumeOpts();
   wireFpsOpts();
   Hud.wire();
@@ -33510,6 +33691,15 @@ function wireVolumeOpts() {
   }
   const v0 = $('opt-vol0'); if (v0) v0.addEventListener('input', sync);
   sync();
+}
+// «Ники и фото над штабами» (ТЗ v8): переключатель в меню и паузе
+function wireHqNames() {
+  for (const id of ['opt-hqnames0', 'opt-hqnames']) {
+    const el = $(id);
+    if (!el) continue;
+    el.checked = Settings.hqNames !== false;
+    el.addEventListener('change', () => { Settings.hqNames = el.checked; Settings.save(); Marks.reset(); for (const o of ['opt-hqnames0', 'opt-hqnames']) { const e2 = $(o); if (e2) e2.checked = el.checked; } });
+  }
 }
 // «Голосовые оповещения»: переключатель в меню и паузе, проверка голоса, есть ли русский голос
 function wireVoiceOpts() {
@@ -33632,7 +33822,7 @@ async function main(hot) {
       newGame, showMenu, menuScene, stepGame, loadMap, commandMove, commandAttack, placeBuilding, placementCheck, BUILDINGS, UNITS, screenToGround, toScreen, pickEntity,
       viewer: () => VIEWER, setViewer: (v) => { VIEWER = v; }, spectate, endGame, Inst, drawWorld, placeMinefield, minePlacementCheck, Mine, wallLineCells, SUPERWEAPONS, FACTIONS, View, onViewChange,
       SFX, SndBank, Snd, SND_RECIPES, SND_SR, AFL, afPatternPath, afWorld, afLocal, afInRect, airbaseSlot, airbaseSlotFor, airfieldOfSlot, groundHeightAny, PLAYER_COLORS, Missile, runwayRequest, runwayGroundBusy, Airfields, runwayPlan, findRunwaySpot, RWY, runwayStatus, Reticle, StrikeWarn, GroundDecal, Construct, Weather, ENV_DEFAULT, commandRepair, commandAbility, ABIL, DOME, SPECIAL_BY_FAC, CruiseMissile, Tamir, LaserBeams, abilityOf, aiUseSpecials, addFireZone, EMP_RES, deformCrater, FACTION_ORDER, factionId, geoOf, WEAPONS, DMG, airborne, damage, FS_LABEL, Models, STYLE, MAT, Ruin, Chunks, baseLocal, Points, PROPS, BIOMES, POINT_KINDS, Post, Guide, BLD_GUIDE, RES_GUIDE, EngineSnd, EDsp, ConSnd, ABIL_EXEC, proAirDefense, pointDefense, THREE,
-      Det, Cmd, CMD, issueOrder, Net, Lockstep, Online, simHash, simDump, MP_TICK, MP_TPT, Tg, resetSimClocks, suggestSpot, footprint, CELL, requirementsMet, q2,
+      Det, Cmd, CMD, issueOrder, Net, Lockstep, Online, Account, Rating, simHash, simDump, MP_TICK, MP_TPT, Tg, resetSimClocks, suggestSpot, footprint, CELL, requirementsMet, q2,
       computeHeight, symFold, Poi, POI_KINDS, poiSpot, Vis, MAP_ORDER, Rec, Replay, ReplayStore, SimClock, detTick, detTicks: (n) => { for (let i = 0; i < n; i++) detTick(); }, GD_BUILD, mpSim, catchingUp, visForce, REPLAY_HASH_EVERY,
       TouchUI, Picker, Kbd, renderPixelRatio, syncDisplayOpts, ErrLog, DevPanel, devAllowed, recomputePower, Spect, Voice, EnemyWatch, ChatUI, Threats, SWAlert, Pings, Marks, PING_KINDS, Territory, History, enemyHidden, teamSees, repairUnit, TreeFall, fellTrees, clearOreAccess, commandPatrol, commandDismount, trFits, ifvBail, earlyRush, AIR_TAKEOFF_K, outpostSpot, DEPLOY_T, SAM_VARIANTS, SAM_LOOK, samTubeWorld, samTarget, samInbound, samLaunch, samMissileDefense, cargoSlots, cargoUsed, landingSpot, commandBoard, TRANSPORT, unitName, JerichoMissile, JERICHO, C4, c4Damage, weaponFor, buildingName, BUILD_TABS, isEnemy, queryUnits, canSee, CYBER, commandCyber, unitVisibleToViewer, stealthStep, splashDamage, hackerStatus, countUnits,
       RESEARCH, hasResearch, DIFFICULTY, airDefenseAt, AIController, unitCost, EXTRA_BY_FAC, NATL, NATL_MISSILE, natlAiTarget, startRunway, setupStartRunways, RwyCon, Flares, wireVolumeOpts, Hud, FrameCap, rwyAbandoned, baseLost, captureRunway, RWY_CAP, runwayCaptureText, buildCrews, buildActive, parallelBuild, runwayRemove, runwaySellBlock, rwyRotOf, rwyRotNext, rwyRotAdd, rwyAxes, rwyDeg, airbaseFp, rwyRectCentre, rwyFrameAf, siteCorridorAt, AF_K, allyRefineryAt, SLING, canAbility, PropMeshes, prepareCraters,
@@ -33731,10 +33921,12 @@ const Net = {
       if (m.t === 'pong') { if (m.k === this.pingK) this.rtt = Math.round(performance.now() - this.pingSent); return; }
       const h = this.handlers[m.t]; if (h) h(m);
     };
-    ws.onclose = () => {
+    ws.onclose = (e) => {
       if (ws !== this.ws) return;
       this.ws = null; this.state = 'off';
       if (this.closing) return;
+      // 4001 — тот же аккаунт вошёл с другого устройства и занял место: не переподключаемся (иначе устройства выбивали бы друг друга)
+      if (e && e.code === 4001) { this.closing = true; const h = this.handlers.replaced; if (h) h(); return; }
       // сервер так и не ответил — не мучаем повторами
       if (!this.everOpen && this.tries >= 2) { this.closing = true; this.fail('Не удалось подключиться к серверу сетевой игры'); return; }
       const h = this.handlers.lost; if (h) h();
@@ -33950,6 +34142,8 @@ const Tg = {
     const m = /[#&?]tgWebAppStartParam=([^&]+)/.exec(location.hash + '&' + location.search);
     return m ? decodeURIComponent(m[1]) : '';
   },
+  // подписанные данные входа Telegram (сервер проверяет подпись: игрок — аккаунт Telegram); вне Telegram — пустая строка
+  initData() { return this.W && typeof this.W.initData === 'string' ? this.W.initData : ''; },
   userName() {
     const u = this.W && this.W.initDataUnsafe && this.W.initDataUnsafe.user;
     return u ? cleanName(u.username || [u.first_name, u.last_name].filter(Boolean).join(' ')) : '';
@@ -33964,17 +34158,20 @@ const Tg = {
 const Online = {
   active: false, phase: 'off', room: null, code: '', tok: '', srvCfg: null, chat: [], chatCh: 'all', cpop: null, wantCreate: false, wantSpec: false,
   waitNames: null, desyncN: -1, lostT: 0, mpHud: null, sig: '', joinCode: '', rowHtml: [], rowPending: false, listTimer: 0,
+  ranked: false, result: null, roomMsg: '', roomMsgTm: 0, rkWait: false, retAt: 0, retTm: 0, recs: new Set(),
   init() {
     // скрипт Telegram грузится асинхронно: если он пришёл позже — подключаемся к мини-приложению тогда
     window.__tgLoaded = () => {
       if (!Tg.init()) return;
       if (!Settings.nick && Tg.userName()) { Settings.nick = Tg.userName(); Settings.save(); }
+      Account.refresh();
       if (G.state === 'menu') this.autoJoin();
     };
     this.tok = lsGet('gd.tok', '');
     if (!/^[A-Za-z0-9]{12,32}$/.test(this.tok)) { this.tok = Array.from({ length: 20 }, () => ROOM_ABC[(VR() * ROOM_ABC.length) | 0]).join(''); lsSet('gd.tok', this.tok); }
     Tg.init();
     if (!Settings.nick && Tg.userName()) { Settings.nick = Tg.userName(); Settings.save(); }
+    Account.refresh();
     this.wire();
     this.netHandlers();
     // правила сервера: ссылка на мини-приложение для приглашений
@@ -34011,7 +34208,29 @@ const Online = {
   wire() {
     const b = $('b-online');
     if (b) b.addEventListener('click', () => { SFX.init(); SFX.ui('click'); this.open(); });
-    $('on-back').addEventListener('click', () => { SFX.ui('click'); if (this.phase === 'room' || this.phase === 'connecting') this.leaveRoom(); else this.close(); });
+    // «▶ Запись боя» в окне итога и в комнате: запись — с сервера; из окна итога — сначала в комнату (Replay.playRemote)
+    for (const id of ['end-rating', 'on-result']) {
+      $(id).addEventListener('click', (e) => {
+        const b = e.target.closest('[data-rec]');
+        if (!b || b.disabled) return;
+        SFX.init(); SFX.ui('click'); b.disabled = true;
+        Replay.playRemote(b.dataset.rec, 'room').finally(() => { b.disabled = false; });
+      });
+    }
+    $('on-back').addEventListener('click', (e) => {
+      SFX.ui('click');
+      const b = e.currentTarget, r = this.room;
+      // бой идёт без меня и вернуться в него ещё можно: выход из комнаты отнимет эту возможность — просим подтвердить (3 с)
+      if (this.phase === 'room' && r && r.state === 'game' && r.ret && !r.ret.out) {
+        if (!b.classList.contains('armed')) {
+          b.classList.add('armed', 'btn-danger'); b.textContent = 'Выйти из комнаты? В бой вернуться будет нельзя';
+          setTimeout(() => { if (b.classList.contains('armed')) { b.classList.remove('armed', 'btn-danger'); b.textContent = 'Назад'; } }, 3000);
+          return;
+        }
+      }
+      b.classList.remove('armed', 'btn-danger'); b.textContent = 'Назад';
+      if (this.phase === 'room' || this.phase === 'connecting') this.leaveRoom(); else this.close();
+    });
     $('on-create').addEventListener('click', () => { SFX.init(); SFX.ui('click'); this.create(); });
     $('on-join').addEventListener('click', () => { SFX.init(); SFX.ui('click'); this.join($('on-code').value); });
     $('on-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.join($('on-code').value); });
@@ -34025,6 +34244,7 @@ const Online = {
     $('on-copy').addEventListener('click', () => this.copyLink());
     $('on-start').addEventListener('click', () => this.start());
     $('on-spec').addEventListener('click', () => { SFX.ui('click'); Net.send({ t: 'take', i: -1 }); });
+    $('on-return-go').addEventListener('click', () => this.returnToBattle());
     $('on-watch').addEventListener('click', () => { SFX.ui('click'); Net.send({ t: 'watch' }); this.status('Загрузка боя…'); });
     // открытые комнаты: «Войти» — на свободное место, «Смотреть» — зрителем (места не занимает)
     $('on-list').addEventListener('click', (e) => {
@@ -34036,6 +34256,8 @@ const Online = {
     const title = $('on-room-title');
     title.addEventListener('change', () => { if (this.isHost()) Net.send({ t: 'set', s: { name: cleanName(title.value, 28) } }); });
     $('on-pub').addEventListener('change', (e) => { if (this.isHost() && e.target.dataset.o === 'pub') Net.send({ t: 'set', s: { pub: e.target.checked } }); });
+    // рейтинговый бой (ТЗ v8): включает хост; сервер сам фиксирует правила и карту — если включить нельзя, ответит причиной
+    $('on-rank').addEventListener('change', (e) => { if (this.isHost() && e.target.id === 'on-o-rank') { SFX.ui('click'); Net.send({ t: 'set', s: { rank: e.target.checked } }); } });
     // выбор в своей строке закончен — догоняем изменения других игроков, пришедшие за это время
     $('on-slots').addEventListener('focusout', () => setTimeout(() => { if (this.rowPending && this.phase === 'room') this.renderRoom(); }, 0));
     document.addEventListener('tpickclose', () => setTimeout(() => { if (this.rowPending && this.phase === 'room') this.renderRoom(); }, 0));
@@ -34080,7 +34302,7 @@ const Online = {
   netHandlers() {
     Net.on('open', () => {
       this.lostT = 0;
-      Net.send({ t: 'hello', v: MP_PROTO, name: Settings.nick || Tg.userName() || '', tok: this.tok, create: this.wantCreate, spec: this.wantSpec, map: Lobby.map, n: MAPS[Lobby.map].players });
+      Net.send({ t: 'hello', v: MP_PROTO, b: GD_BUILD, name: Settings.nick || Tg.userName() || '', init: Tg.initData() || undefined, tok: this.tok, create: this.wantCreate, spec: this.wantSpec, map: Lobby.map, n: MAPS[Lobby.map].players });
       this.status(this.phase === 'game' ? '' : 'Подключено');
     });
     Net.on('room', (m) => this.onRoom(m));
@@ -34092,8 +34314,26 @@ const Online = {
     Net.on('desync', (m) => { if (this.desyncN < 0) { this.desyncN = m.n | 0; UI.notify('Рассинхронизация с другими игроками (ход ' + this.desyncN + '). Бой продолжается, но у участников он может отличаться', 'warn'); } });
     Net.on('end', () => { Lockstep.end(); if (this.phase === 'game' && G.state === 'playing' && !Lockstep.endPending) UI.notify('Бой завершён — все вернулись в комнату', 'info'); });
     Net.on('chat', (m) => this.onChat(m));
+    Net.on('result', (m) => this.onResult(m));
+    Net.on('rec', (m) => this.onRec(m));
+    Net.on('out', () => this.onOut());
     Net.on('lost', () => { this.lostT = performance.now(); this.status('Связь потеряна — переподключение…'); });
+    Net.on('replaced', () => this.onReplaced());
     Net.on('fail', (msg) => { if (this.silent) { this.silent = false; this.phase = 'off'; return; } this.msg(msg); this.phase = 'off'; this.renderEntry(); });
+  },
+  // тот же аккаунт вошёл в эту комнату с другого устройства и занял место: здесь соединение остановлено
+  // (иначе два устройства бесконечно выбивали бы друг друга); бой, если он идёт, продолжается на другом устройстве
+  onReplaced() {
+    const wasGame = this.phase === 'game' || Lockstep.on;
+    lsSet('gd.room', '');
+    Net.close(true);
+    if (Lockstep.on) Lockstep.stop();
+    this.phase = 'off'; this.room = null; this.chat = []; this.silent = false;
+    $('end').hidden = true; $('pause').hidden = true;
+    if (wasGame) showMenu();
+    this.open();
+    this.msg('Ваш аккаунт вошёл в комнату с другого устройства — здесь соединение остановлено. Чтобы вернуться сюда, зайдите в комнату по коду.');
+    UI.notify('Аккаунт вошёл с другого устройства — здесь соединение остановлено', 'warn');
   },
   isHost() { return !!this.room && this.room.me === this.room.host; },
   mySlot() { const r = this.room; if (!r) return -1; const me = r.mem.find((x) => x.id === r.me); return me ? me.slot : -1; },
@@ -34115,6 +34355,7 @@ const Online = {
     $('online').hidden = false;
     $('menu').hidden = true;
     $('on-nick').value = Settings.nick || '';
+    Account.render(); Account.refresh();
     if (this.phase === 'room') this.renderRoom(); else this.renderEntry();
   },
   close() {
@@ -34185,10 +34426,19 @@ const Online = {
       return;
     }
     UI.notify(t, 'warn'); this.msg(t);
+    if (this.phase === 'room') this.roomNote(t, m.code);
+  },
+  // отказ сервера в комнате (нельзя включить рейтинговый бой, нельзя начать): показываем у переключателя и под местами на 8 секунд
+  roomNote(t, code) {
+    this.roomMsg = t; this.roomMsgCode = code || '';
+    clearTimeout(this.roomMsgTm);
+    this.roomMsgTm = setTimeout(() => { this.roomMsg = ''; if (this.phase === 'room' && this.room) this.renderRoom(); }, 8000);
+    if (this.room) this.renderRoom();
   },
   onRoom(m) {
     const was = this.phase;
-    this.room = m; this.code = m.code; this.wantCreate = false;
+    this.room = m; this.code = m.code; this.wantCreate = false; this.retAt = performance.now();
+    Account.fromRoom(m);
     lsSet('gd.room', JSON.stringify({ code: m.code, t: Date.now() }));
     if (this.silent) { this.silent = false; if (G.state === 'menu' && $('online').hidden) this.open(); }
     if (this.phase === 'connecting' || this.phase === 'off') this.phase = 'room';
@@ -34235,12 +34485,13 @@ const Online = {
     this.stopList();
     $('on-entry').hidden = true; $('on-room').hidden = false;
     $('online').classList.add('room-on'); $('on-chatbox').hidden = false;
-    const host = this.isHost(), mine = this.mySlot(), d = MAPS[r.s.map] || MAPS[Lobby.map];
+    const host = this.isHost(), mine = this.mySlot(), d = MAPS[r.s.map] || MAPS[Lobby.map], ranked = !!r.s.rank;
     $('on-room-code').textContent = r.code;
     $('on-room-name').textContent = r.s.name ? r.s.name : 'Код комнаты';
     $('on-map-name').textContent = d.name;
     $('on-map-meta').textContent = mapMeta(d);
     const mapSel = $('on-map');
+    this.fillMaps(ranked, r.s.map);
     if (document.activeElement !== mapSel) mapSel.value = r.s.map;
     mapSel.disabled = !host || r.state !== 'lobby';
     $('on-map-row').hidden = !host;
@@ -34256,11 +34507,12 @@ const Online = {
       const canEdit = r.state === 'lobby' && (me || (host && ai));
       let who;
       // имя игрока занимает и колонку «кто на месте»: строка шире, имя не обрезается до одной буквы
-      if (human) who = '<span class="who wide' + (me ? ' me' : '') + '"><b>' + esc((M && M.name) || 'Игрок') + '</b>' + (s.m === r.host ? '<i class="host" title="Хост комнаты: правила и «В бой»">★ хост</i>' : '') + (M && !M.on ? '<i class="off">нет связи</i>' : '') + '</span>';
-      else if (s.k === 'open') who = '<span class="who open">' + (r.state === 'lobby' && !me ? '<button type="button" class="take" data-take="' + i + '">Занять место</button>' : 'Свободно') + '</span>';
+      if (human) who = '<span class="who wide' + (me ? ' me' : '') + '">' + (M && M.u ? Account.ava(M.u, M.name, M.av, 20, C.css) : '') + '<b>' + esc((M && M.name) || 'Игрок') + '</b>' + (M ? this.rtBadge(M.rt) : '') + (s.m === r.host ? '<i class="host" title="Хост комнаты: правила и «В бой»">★ хост</i>' : '') + (M && !M.on ? '<i class="off">нет связи</i>' : '') + '</span>';
+      else if (s.k === 'open') who = '<span class="who open' + (ranked ? ' wide' : '') + '">' + (r.state === 'lobby' && !me ? '<button type="button" class="take" data-take="' + i + '">Занять место</button>' : 'Свободно') + '</span>';
       else if (s.k === 'closed') who = '<span class="who dim">—</span>';
       else who = '<span class="who ai">' + esc(C.name) + '</span>';
-      const kindSel = human ? '' : '<label class="sel k-kind"><span class="vh">Место ' + (i + 1) + '</span><select data-k="k"' + (host && r.state === 'lobby' ? '' : ' disabled') + '>' + kopt(s.k) + '</select></label>';
+      // в рейтинговом бою места занимают только люди: вид места (ИИ, закрыто) не меняется
+      const kindSel = human || ranked ? '' : '<label class="sel k-kind"><span class="vh">Место ' + (i + 1) + '</span><select data-k="k"' + (host && r.state === 'lobby' ? '' : ' disabled') + '>' + kopt(s.k) + '</select></label>';
       const off = s.k === 'open' || s.k === 'closed';
       return '<div class="slot' + (s.k === 'closed' ? ' closed' : '') + (me ? ' me' : '') + '" data-i="' + i + '">' +
         '<button type="button" class="sw" style="--pc:' + C.css + '" data-color="' + i + '" aria-label="Цвет места ' + (i + 1) + ': ' + esc(C.name) + '"' + (canEdit ? '' : ' disabled') + '>' + (i + 1) + '</button>' +
@@ -34298,19 +34550,23 @@ const Online = {
     $('on-watch').hidden = !(r.state === 'game' && !r.playing);
     // правила (меняет хост)
     const s = r.s;
-    document.querySelectorAll('[name="on-credits"]').forEach((el) => { el.checked = +el.value === s.credits; el.disabled = !host; });
-    document.querySelectorAll('#on-opts [data-o], #on-pub [data-o]').forEach((el) => { el.checked = el.dataset.o === 'par' ? s.par !== false : !!s[el.dataset.o]; el.disabled = !host; });
+    // в рейтинговом бою правила фиксированы сервером (одинаковы для всех) — переключатели только показывают их
+    document.querySelectorAll('[name="on-credits"]').forEach((el) => { el.checked = +el.value === s.credits; el.disabled = !host || ranked; });
+    document.querySelectorAll('#on-opts [data-o], #on-pub [data-o]').forEach((el) => { el.checked = el.dataset.o === 'par' ? s.par !== false : !!s[el.dataset.o]; el.disabled = !host || (ranked && el.dataset.o !== 'pub'); });
     const ps = $('on-o-poi');
     if (ps) {
       if (!ps.options.length) ps.innerHTML = POI_OPTS.map(([v, t]) => '<option value="' + v + '">' + t + '</option>').join('');
-      ps.value = POI_OPTS.some(([v]) => v === s.poi) ? s.poi : 'off'; ps.disabled = !host;
+      ps.value = POI_OPTS.some(([v]) => v === s.poi) ? s.poi : 'off'; ps.disabled = !host || ranked;
       const pn = $('on-poi-note'); if (pn) pn.textContent = poiNote(ps.value, s.map);
     }
     $('on-pub').hidden = !host;
+    this.renderRank(r, host);
     const title = $('on-room-title');
     if (document.activeElement !== title && !title.classList.contains('kbd-on')) title.value = s.name || '';
     const err = this.validate();
-    $('on-err').textContent = r.state === 'game' ? (r.playing ? 'Идёт бой.' : 'Идёт бой — можно смотреть (зрители видят бой с задержкой). Новые игроки присоединятся к следующему.') : err || '';
+    this.renderReturn();
+    $('on-err').textContent = r.state === 'game' ? (r.playing ? 'Идёт бой.' : r.ret ? 'Идёт бой без вас.' : 'Идёт бой — можно смотреть (зрители видят бой с задержкой). Новые игроки присоединятся к следующему.') : this.roomMsg && this.roomMsgCode !== 'rank' ? this.roomMsg : err || '';
+    this.paintResult($('on-result'), r.state === 'lobby' ? this.result : null, false);
     const st = $('on-start');
     st.hidden = !host || r.state !== 'lobby';
     st.classList.toggle('dim', !!err);
@@ -34319,9 +34575,102 @@ const Online = {
     this.syncChatCh();
     this.renderChat();
   },
+  // ---------- рейтинговый бой (ТЗ v8, этап 3) ----------
+  // список карт: в рейтинговом бою — только карты с равными условиями для всех мест (их называет сервер)
+  fillMaps(ranked, cur) {
+    const sel = $('on-map'), key = ranked ? 'r' : 'a';
+    if (sel.dataset.mode === key) return;
+    sel.dataset.mode = key;
+    let ids = Object.keys(MAPS);
+    if (ranked) { ids = ids.filter((id) => this.srvCfg && this.srvCfg.rankMaps && this.srvCfg.rankMaps[id]); if (!ids.length && MAPS[cur]) ids = [cur]; }
+    sel.innerHTML = ids.map((id) => '<option value="' + id + '">' + esc(MAPS[id].name) + ' · ' + plural(MAPS[id].players, 'игрок', 'игрока', 'игроков') + '</option>').join('');
+  },
+  // значок рейтинга у ника: число в цвете лиги; пока идёт калибровка (первые бои) — «кал 2/5»
+  rtBadge(rt) {
+    if (!rt || typeof rt.r !== 'number') return '';
+    const cal = /^Калибровка/.test(rt.lg || '');
+    if (cal) return '<em class="rtb calib" title="' + esc(rt.lg) + ': рейтинг определяется по первым боям">' + esc(rt.lg.replace('Калибровка', 'кал')) + '</em>';
+    return '<em class="rtb" style="--lc:' + esc(rt.lc || '#8a94a3') + '" title="' + esc(rt.lg) + ' · рейтинг ' + (rt.r | 0) + '">' + (rt.r | 0) + '</em>';
+  },
+  // переключатель «Рейтинговый бой» (хосту) и пояснение (всем в комнате)
+  renderRank(r, host) {
+    const box = $('on-rank'), cb = $('on-o-rank'), note = $('on-rank-note'), ranked = !!r.s.rank;
+    const can = !!(this.srvCfg && this.srvCfg.rank);
+    box.hidden = !(ranked || (host && can && r.state === 'lobby'));
+    box.classList.toggle('on', ranked);
+    cb.checked = ranked;
+    const authed = Account.ok;
+    cb.disabled = !host || r.state !== 'lobby' || (!ranked && !authed);
+    let t = '', warn = false;
+    if (this.roomMsg && this.roomMsgCode === 'rank') { t = this.roomMsg; warn = true; }
+    else if (ranked) t = 'Правила одинаковы для всех: 5 000 ₡, гипероружие, туман войны, параллельная стройка, погода и смена дня и ночи. Играют только люди и только вошедшие через Telegram, места ИИ нет. Выход из боя до 3-й минуты — штраф и пауза, после — поражение. Вылетели или вышли — вернуться в бой можно в течение 4 минут.';
+    else if (!authed) t = 'Рейтинговые бои — для вошедших через Telegram: откройте игру в Telegram, и бои начнут менять ваш рейтинг.';
+    else t = 'Бой меняет рейтинг участников: правила одинаковы для всех, ИИ нет, карта — из списка равных по условиям.';
+    note.textContent = t;
+    note.classList.toggle('warn', warn);
+  },
+  // ---------- возврат в бой после вылета (ТЗ v8, этап 4) ----------
+  // Плашка в комнате, пока бой идёт без меня (вышел в комнату, пропала связь): сколько осталось на возвращение и кнопка «Вернуться в бой».
+  // Рейтинговый бой — окно 4 минуты, потом выход засчитывается; обычный — вернуться можно, пока бой идёт.
+  renderReturn() {
+    const r = this.room, box = $('on-return');
+    if (!box) return;
+    clearInterval(this.retTm); this.retTm = 0;
+    const ret = r && r.state === 'game' ? r.ret : null;
+    box.hidden = !ret;
+    if (!ret) return;
+    const out = !!ret.out, txt = $('on-return-p');
+    box.classList.toggle('out', out);
+    $('on-return-go').hidden = out;
+    $('on-return-h').textContent = out ? 'Время возврата в бой вышло' : ret.why === 'leave' ? 'Вы вышли из боя' : 'Вы вылетели из боя';
+    const paint = () => {
+      if (out) { txt.textContent = 'Выход из боя засчитан, бой идёт без вас. Итог появится в комнате, когда бой закончится.'; return; }
+      if (ret.ms < 0) { txt.textContent = 'Войсками командует ИИ. Вернуться можно в любой момент, пока бой не закончился.'; return; }
+      const left = Math.max(0, ret.ms - (performance.now() - this.retAt));
+      txt.textContent = '';
+      txt.append('Войсками командует ИИ. Вернуться можно ещё ');
+      const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = this.fmtLeft(left);
+      txt.append(tm, left > 0 ? ' — потом выход из боя будет засчитан.' : ' — время вышло, ждём решения сервера…');
+    };
+    paint();
+    if (!out && ret.ms >= 0) this.retTm = setInterval(() => { if (this.room && this.room.ret === ret && $('on-return').hidden === false) paint(); else { clearInterval(this.retTm); this.retTm = 0; } }, 500);
+  },
+  // «3:41»
+  fmtLeft(ms) { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); },
+  // «Вернуться в бой»: сервер заново присылает описание боя и все ходы, игра быстро пересчитывает бой и снова берёт командование
+  returnToBattle() {
+    SFX.init(); SFX.ui('click');
+    this.rejoinT = performance.now();
+    this.status('Возвращаемся в бой…');
+    Net.send({ t: 'return' });
+  },
+  // сервер: вернуться нельзя (окно возврата вышло в рейтинговом бою) — бой идёт без меня
+  onOut() {
+    const inBattle = this.phase === 'game' || Lockstep.on;
+    if (inBattle) {
+      // страница ещё в бою (отстала настолько, что её место отдано насовсем): выходим в комнату, выход уже записан сервером
+      Lockstep.stop();
+      this.phase = Net.ready() || Net.state === 'retry' ? 'room' : 'off';
+      $('end').hidden = true; $('pause').hidden = true;
+      showMenu();
+      this.open();
+    }
+    UI.notify('Время возврата в бой вышло — выход из боя засчитан', 'warn');
+    this.status('');
+    if (this.phase === 'room' && this.room) this.renderRoom();
+  },
   validate() {
     const r = this.room;
     if (!r) return 'Нет комнаты';
+    if (r.s.rank) {
+      const free = r.slots.filter((x) => x.k !== 'human').length;
+      if (free) return 'В рейтинговом бою играют только люди: свободных мест — ' + free + '. Позовите игроков или выберите карту поменьше';
+      if (r.slots.some((x) => !(r.mem.find((m) => m.id === x.m) || {}).on)) return 'Ждём, пока все игроки будут на связи';
+      const guest = r.slots.map((x) => r.mem.find((m) => m.id === x.m)).find((m) => m && !m.u);
+      if (guest) return guest.name + ' не вошёл через Telegram — в рейтинговом бою играют только вошедшие';
+      if (new Set(r.slots.map((x, i) => (x.t ? 't' + x.t : 'p' + i))).size < 2) return 'Нужны хотя бы две стороны: разведите игроков по разным союзам';
+      return null;
+    }
     const act = r.slots.map((s, i) => ({ s, i })).filter((x) => x.s.k !== 'closed' && x.s.k !== 'open');
     if (act.length < 2) return 'Нужно минимум два участника: позовите друга или отдайте место ИИ';
     const sides = new Set(act.map((x) => (x.s.t ? 't' + x.s.t : 'p' + x.i)));
@@ -34408,13 +34757,86 @@ const Online = {
     this.status('Запуск…');
   },
   async onStart(m) {
+    Replay.stop(); // смотрели запись боя, а хост начал новый бой — запись закрывается
     this.phase = 'game'; this.active = true; this.waitNames = null; this.desyncN = -1;
+    this.ranked = !!m.rk; this.result = null; this.rkWait = false; this.roomMsg = '';
+    $('end-rating').hidden = true; $('on-result').hidden = true;
     this.closeColors();
     $('online').hidden = true;
     if (Tg.on) Tg.haptic('success');
     try { await Lockstep.begin(m); } catch (e) { console.error(e); UI.notify('Не удалось начать бой: ' + (e && e.message), 'warn'); }
   },
-  onBattleOver() { Net.send({ t: 'over' }); },
+  // ---------- итог боя и рейтинг (ТЗ v8, этап 3) ----------
+  // Отчёт этой игры о конце боя для судьи на сервере (online/judge.js): на каком такте бой кончился, хеш состояния
+  // и кто как выбыл — по общему состоянию боя, поэтому у всех участников он совпадает до последнего числа.
+  // Сервер засчитывает бой, только если совпали отчёты всех досмотревших; не совпали — бой не засчитан (и записан для проверки).
+  report() {
+    const r = Players.map((P) => [P.alive ? 1 : 0, P.alive ? -1 : Math.max(0, Math.round(P.defeatedAt * 60)), P.surrendered ? 1 : 0, Math.max(0, FACTION_ORDER.indexOf(P.faction))]);
+    return { tk: Lockstep.next * MP_TPT + Lockstep.sub, h: simHash(), r };
+  },
+  // бой досмотрен до конца: отчёт серверу; в рейтинговом бою дальше ждём его решения
+  onBattleOver() {
+    Net.send({ t: 'over', rep: this.report() });
+    if (this.ranked) { this.rkWait = true; this.paintEnd(); }
+  },
+  // решение сервера о рейтинге: в окне итога боя (если открыто), в комнате и всплывающей строкой
+  onResult(m) {
+    if (!m || typeof m !== 'object' || !Array.isArray(m.rows)) return;
+    this.result = m; this.rkWait = false;
+    if (m.mid && m.rec) this.recs.add(m.mid);
+    if (m.ranked) {
+      Account.refresh(true);
+      const me = m.rows.find((x) => x.u && x.u === Account.uid);
+      if (me && typeof me.d === 'number' && m.rated) UI.notify('Рейтинг: ' + me.a + ' (' + (me.d > 0 ? '+' : me.d < 0 ? '−' : '') + Math.abs(me.d) + ')', me.d >= 0 ? 'ok' : 'warn');
+      else if (m.status !== 'ok') UI.notify('Бой не засчитан в рейтинг', 'warn');
+    }
+    this.paintEnd();
+    if (this.phase === 'room' && this.room) this.renderRoom();
+  },
+  // запись боя сохранена на сервере (приходит следом за итогом): в окне итога и в комнате появляется «Запись боя»
+  onRec(m) {
+    if (!m || typeof m.mid !== 'string') return;
+    this.recs.add(m.mid);
+    if (!this.result || this.result.mid !== m.mid) return;
+    this.paintEnd();
+    if (this.phase === 'room' && this.room) this.renderRoom();
+  },
+  hasRec(res) { return !!(res && res.mid && (res.rec || this.recs.has(res.mid))); },
+  // блок «Рейтинг» в окне итога боя: пока бой не окончен для всех — пояснение; потом — решение сервера
+  paintEnd() { if (G.mp) this.paintResult($('end-rating'), this.result, this.ranked); },
+  // el — блок на экране; res — решение сервера (или null); wait — рейтинговый бой ещё не подсчитан
+  paintResult(el, res, wait) {
+    if (!el) return;
+    if (!res) {
+      el.hidden = !wait;
+      if (wait) el.innerHTML = '<h3>Рейтинговый бой</h3><p>' + (this.rkWait ? 'Бой окончен — подсчитываем итог…' : 'Рейтинг считается по итогам всего боя: когда он закончится у всех, результат появится здесь.') + '</p>';
+      return;
+    }
+    if (!res.ranked) {
+      // бой без рейтинга: показывать нечего, кроме записи боя (если сервер её сохранил)
+      el.hidden = !this.hasRec(res);
+      if (!el.hidden) el.innerHTML = '<h3>Бой окончен</h3><p>Запись боя сохранена на сервере на 30 суток.</p>' + this.recBtn(res);
+      return;
+    }
+    const MODE = { duel: 'Дуэль', multi: 'Мультиплеер' };
+    const OUT = { win: 'Победа', loss: 'Поражение', draw: 'Ничья', quit: 'Вышел из боя', early: 'Ранний выход', void: '' };
+    const WHY = { noreport: 'игры участников не прислали итог боя', disagree: 'игры участников насчитали разный итог (запись сохранена для проверки)', early: 'кто-то покинул бой раньше 3-й минуты', single: 'все участники были в одном союзе', abandoned: 'в бою не осталось ни одного игрока' };
+    const me = Account.uid;
+    let h = '<h3>Рейтинговый бой · ' + (MODE[res.mode] || '') + '</h3>';
+    if (res.err) h += '<p class="bad">Итог боя не записан: сервер рейтинга не ответил. Рейтинг не изменился.</p>';
+    else if (res.status !== 'ok') h += '<p class="bad">Бой не засчитан: ' + (WHY[res.reason] || 'итог не определён') + '.' + ((res.pen || []).some((p) => p.uid === me) ? '' : ' Рейтинг не изменился.') + '</p>';
+    for (const p of res.pen || []) if (p.uid === me) h += '<p class="bad">Ранний выход из боя: −' + (p.loss | 0) + ' к рейтингу и пауза ' + (p.mins | 0) + ' мин. в рейтинговых боях.</p>';
+    for (const x of res.rows) {
+      const d = typeof x.d === 'number' ? x.d : null, dd = d === null ? '' : '<span class="rr-d ' + (d > 0 ? 'up' : d < 0 ? 'dn' : 'z') + '">' + (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d) + '</span>';
+      const pen = (res.pen || []).find((p) => p.uid === x.u);
+      h += '<div class="rr-row' + (x.u === me ? ' me' : '') + '"><b>' + esc(x.name) + '</b><span class="rr-o">' + esc(OUT[x.o] || '') + '</span>' +
+        (res.rated && d !== null ? '<span class="rr-lg" style="--lc:' + esc(x.lc || '#8a94a3') + '">' + esc(x.lg || '') + '</span><span class="rr-n">' + (x.b | 0) + ' → ' + (x.a | 0) + ' ' + dd + '</span>'
+          : pen ? '<span class="rr-n"><span class="rr-d dn">−' + (pen.loss | 0) + '</span></span>' : '') + '</div>';
+    }
+    el.innerHTML = h + this.recBtn(res);
+    el.hidden = false;
+  },
+  recBtn(res) { return this.hasRec(res) ? '<button type="button" class="btn-ghost btn-sm rt-play" data-rec="' + esc(res.mid) + '">▶ Запись боя</button>' : ''; },
   // «В комнату» после боя или «Покинуть бой»: войсками дальше командует ИИ
   backToRoom() {
     Net.send({ t: 'lobby' });
@@ -34449,12 +34871,12 @@ const Online = {
     const dl = Math.round(((this.room && this.room.delay) || 60000) / 1000);
     const ping = (Lockstep.me < 0 ? 'зритель · −' + (dl >= 60 ? Math.round(dl / 60) + ' мин' : dl + ' с') + ' · ' : '') + (Net.rtt ? Net.rtt + ' мс' : '…');
     const show = G.state === 'playing' || G.state === 'over';
-    const sig = t + '|' + ping + '|' + cls + '|' + show;
+    const sig = t + '|' + ping + '|' + cls + '|' + show + '|' + this.ranked;
     if (sig === this.sig) return;
     this.sig = sig;
     el.hidden = !show;
     el.dataset.s = cls;
-    el.innerHTML = '<span class="mp-dot"></span><b>' + ping + '</b>';
+    el.innerHTML = '<span class="mp-dot"></span><b>' + ping + '</b>' + (this.ranked ? '<i class="mp-rk" title="Рейтинговый бой: итог изменит рейтинг">рейтинг</i>' : '');
     ban.hidden = !show || !t;
     ban.dataset.s = cls;
     ban.textContent = t;
@@ -34579,6 +35001,215 @@ const ChatUI = {
   // новое сообщение (Online.onChat): открыт чат — показать; закрыт — счётчик на кнопке
   onMessage() {
     if (this.isOpen) this.render(); else if (this.available()) { this.unread++; this.sync(); }
+  },
+};
+
+// ---- 24c_account.js ----
+// =====================================================================
+//  Аккаунт игрока (ТЗ v8): вход через Telegram, профиль, фото.
+//  Игра отправляет серверу подписанные данные входа Telegram (initData) — сервер проверяет подпись, и ник,
+//  номер аккаунта и фото берутся из Telegram, подделать их нельзя. Вне Telegram (обычный браузер), без
+//  настроенного сервера аккаунтов или при сорвавшейся проверке игрок — гость: играет как раньше, но без
+//  рейтинга и записей боёв. Ответ сервера о себе: поле u (номер аккаунта) у своего участника в сообщении
+//  комнаты (Account.fromRoom), либо запрос /api/me из меню (Account.refresh).
+// =====================================================================
+const Account = {
+  uid: 0, name: '', av: false, ok: false, why: '', checked: 0, busy: false, rt: null, // rt — рейтинги по режимам { duel, multi } (ТЗ v8, этап 3)
+  // адрес сервера для обычных запросов (http/https)
+  http() { return Net.available() ? Net.base().replace(/^ws/, 'http') : ''; },
+  // проверка входа без комнаты (в меню): профиль по данным входа Telegram; не чаще раза в минуту
+  refresh(force) {
+    const init = Tg.initData(), base = this.http();
+    if (!init || !base || this.busy) return;
+    if (!force && this.checked && Date.now() - this.checked < 60000) return;
+    this.busy = true;
+    fetch(base + '/api/me', { headers: { authorization: 'tma ' + init }, cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { this.checked = Date.now(); if (j) this.set(j); })
+      .catch(() => {})
+      .then(() => { this.busy = false; });
+  },
+  set(j) {
+    if (j && j.ok) { this.uid = j.uid | 0; this.name = String(j.name || ''); this.av = !!j.av; this.ok = true; this.why = ''; if (j.rt) this.rt = j.rt; }
+    else if (j) { this.ok = false; this.uid = 0; this.name = ''; this.av = false; this.why = String(j.why || 'error'); this.rt = null; }
+    this.render();
+  },
+  // сообщение комнаты: у своего участника есть номер аккаунта — вход подтверждён; иначе сервер мог назвать причину отказа (aw)
+  fromRoom(room) {
+    const me = room && room.mem && room.mem.find((x) => x.id === room.me);
+    if (me && me.u) this.set({ ok: true, uid: me.u, name: me.name, av: !!me.av });
+    else if (room && (room.aw || this.ok)) this.set({ ok: false, why: room.aw || '' });
+  },
+  // почему вход через Telegram не подтверждён (для игрока); «сервер не настроен» ничего не показывает — это не вина игрока
+  whyText(w) {
+    if (!w || w === 'unconfigured') return '';
+    if (w === 'expired') return 'Данные входа Telegram устарели — закройте игру и откройте её в Telegram заново. Пока вы играете как гость.';
+    if (w === 'timeout' || w === 'error') return 'Сервер аккаунтов сейчас не отвечает — вы играете как гость.';
+    return 'Не удалось подтвердить вход через Telegram — вы играете как гость.';
+  },
+  avatarUrl(uid) { const b = this.http(); return b && uid > 0 ? b + '/api/avatar/' + (uid | 0) : ''; },
+  // кружок игрока: буква, поверх — фото (если не загрузилось, останется буква); size — в пикселях, color — цвет подложки
+  ava(uid, name, has, size, color) {
+    const L = Array.from(String(name || '?').trim())[0] || '?', u = has ? this.avatarUrl(uid) : '';
+    return '<span class="ava" style="--s:' + (size | 0) + 'px' + (color ? ';--pc:' + esc(color) : '') + '"><span class="al">' + esc(L.toUpperCase()) + '</span>' + (u ? '<img src="' + esc(u) + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
+  },
+  // фото для рисования на холсте (плашки над штабами): картинка загружается один раз и дальше берётся из памяти.
+  // imgState: 0 — грузится, 1 — готова, 2 — нет (тогда рисуем кружок с буквой)
+  imgs: new Map(),
+  img(uid) {
+    if (!uid) return null;
+    let e = this.imgs.get(uid);
+    if (!e) {
+      e = { im: null, st: 0 };
+      this.imgs.set(uid, e);
+      const url = this.avatarUrl(uid);
+      if (!url) { e.st = 2; return null; }
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      // svg без собственного размера на холст не рисуется — считаем такое фото недоступным
+      im.onload = () => { e.st = im.naturalWidth > 0 && im.naturalHeight > 0 ? 1 : 2; };
+      im.onerror = () => { e.st = 2; };
+      im.src = url;
+      e.im = im;
+    }
+    return e.st === 1 ? e.im : null;
+  },
+  imgState(uid) { const e = this.imgs.get(uid); return e ? e.st : 0; },
+  render() {
+    const chip = $('on-acc');
+    if (!chip) return;
+    chip.hidden = !this.ok;
+    if (this.ok) { $('on-acc-ava').innerHTML = this.ava(this.uid, this.name, this.av, 36); $('on-acc-name').textContent = this.name; $('on-acc-sub').textContent = Rating.line(this.rt) || 'Аккаунт Telegram'; }
+    // ник игрока с аккаунтом — из Telegram и не меняется (иначе под чужим именем играть было бы можно)
+    const nick = $('on-nick'), lab = $('on-nick-l');
+    if (nick) {
+      nick.readOnly = this.ok;
+      if (document.activeElement !== nick) nick.value = this.ok ? this.name : Settings.nick || '';
+    }
+    if (lab) lab.textContent = this.ok ? 'Ник (из Telegram)' : 'Ваш никнейм';
+    const note = $('on-acc-note'), t = !this.ok && Tg.on ? this.whyText(this.why) : '';
+    if (note) { note.hidden = !t; note.textContent = t; }
+  },
+};
+// фото, которое не загрузилось (нет файла, сервер недоступен), убираем — под ним уже нарисована буква
+document.addEventListener('error', (e) => { const t = e.target; if (t && t.tagName === 'IMG' && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('ava')) t.remove(); }, true);
+
+// ---- 24d_rating.js ----
+// =====================================================================
+//  Вкладка «Рейтинг» (ТЗ v8, этап 3): моя карточка, таблица лучших по режимам («Дуэль 1×1» и «Мультиплеер»),
+//  карточка любого игрока из таблицы и его последние бои. Данные — с сервера аккаунтов (/api/top, /api/profile/<номер>);
+//  без сервера (локальный запуск) вкладка объясняет, где рейтинг работает. Рейтинг меняют только рейтинговые бои
+//  (переключатель в комнате) между игроками, вошедшими через Telegram; в таблицу попадают прошедшие калибровку.
+// =====================================================================
+const RT_MODES = { duel: 'Дуэль 1×1', multi: 'Мультиплеер' };
+const RT_OUT = { win: 'Победа', loss: 'Поражение', draw: 'Ничья', quit: 'Вышел из боя', early: 'Ранний выход', void: 'Не засчитан' };
+const Rating = {
+  mode: lsGet('gd.rmode', 'duel') === 'multi' ? 'multi' : 'duel', who: 0, seq: 0, wired: false, cache: null, cur: null,
+  // рейтинг режима одной строкой: «1012 · Серебро II» или, пока идёт калибровка, «калибровка 2/5»
+  fmt(x) { return !x ? '' : /^Калибровка/.test(x.lg || '') ? x.lg.toLowerCase() : x.r + ' · ' + x.lg; },
+  // коротко, для плашки аккаунта: «Дуэль 1012 · Мультиплеер кал 2/5»
+  line(rt) {
+    if (!rt) return '';
+    const p = (k, n) => { const x = rt[k]; return x ? n + ' ' + (/^Калибровка/.test(x.lg || '') ? x.lg.replace('Калибровка', 'кал') : x.r) : ''; };
+    return [p('duel', 'Дуэль'), p('multi', 'Мультиплеер')].filter(Boolean).join(' · ');
+  },
+  get(path) {
+    const base = Account.http();
+    if (!base) return Promise.resolve(null);
+    return fetch(base + path, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  },
+  wire() {
+    if (this.wired) return;
+    this.wired = true;
+    document.querySelectorAll('[name="rt-mode"]').forEach((r) => r.addEventListener('change', () => { if (!r.checked) return; this.mode = r.value === 'multi' ? 'multi' : 'duel'; lsSet('gd.rmode', this.mode); SFX.ui('click'); this.render(); }));
+    $('rt-refresh').addEventListener('click', () => { SFX.init(); SFX.ui('click'); this.render(); });
+    $('rt-list').addEventListener('click', (e) => { const b = e.target.closest('[data-uid]'); if (b) { SFX.ui('click'); this.open(+b.dataset.uid); } });
+    $('pg-rating').addEventListener('click', (e) => { if (e.target.closest('[data-back]')) { SFX.ui('click'); this.open(0); } });
+    // запись боя (ТЗ v8, этап 5): «Смотреть» в строке боя, «Показать ещё» под списком
+    $('rt-recent').addEventListener('click', (e) => {
+      const p = e.target.closest('[data-rec]'), m = e.target.closest('[data-more]');
+      if (p && !p.disabled) { SFX.init(); SFX.ui('click'); p.disabled = true; Replay.playRemote(p.dataset.rec, 'rating').finally(() => { p.disabled = false; }); }
+      else if (m && !m.disabled) { SFX.ui('click'); this.more(m); }
+    });
+  },
+  // ещё бои игрока (следующая страница списка); курсор — последний показанный бой
+  more(btn) {
+    const c = this.cur, base = Account.http();
+    if (!c || !base) return;
+    btn.disabled = true;
+    const seq = this.seq;
+    this.get('/api/matches?uid=' + c.uid + '&limit=10&after=' + c.t + ':' + encodeURIComponent(c.id)).then((r) => {
+      // пока грузилось, открыли другую карточку или список перерисовался (кнопки уже нет на экране)
+      if (seq !== this.seq || !this.cur || this.cur.uid !== c.uid || !btn.isConnected) return;
+      if (!r || !r.ok) { btn.disabled = false; UI.notify('Не удалось загрузить бои — попробуйте ещё раз', 'warn'); return; }
+      btn.insertAdjacentHTML('beforebegin', r.list.map((m) => this.matchHtml(m)).join(''));
+      if (r.list.length) { const l = r.list[r.list.length - 1]; this.cur = { uid: c.uid, t: l.t, id: l.id }; }
+      if (r.more) btn.disabled = false; else btn.remove();
+    });
+  },
+  // карточка игрока из таблицы (0 — назад к своей карточке)
+  open(uid) { this.who = uid | 0; this.render(); $('menu').querySelector('.mn-body').scrollTop = 0; },
+  render() {
+    this.wire();
+    const note = $('rt-note'), list = $('rt-list'), me = $('rt-me'), recent = $('rt-recent');
+    document.querySelectorAll('[name="rt-mode"]').forEach((r) => { r.checked = r.value === this.mode; });
+    if (!Account.http()) {
+      me.innerHTML = list.innerHTML = recent.innerHTML = '';
+      note.textContent = 'Рейтинг работает на сервере сетевой игры: откройте игру на её сайте или в Telegram.';
+      return;
+    }
+    const seq = ++this.seq, uid = this.who || (Account.ok ? Account.uid : 0);
+    note.textContent = 'Загрузка…';
+    Promise.all([this.get('/api/top?mode=' + this.mode + '&limit=30'), uid ? this.get('/api/profile/' + uid) : Promise.resolve(null)]).then(([top, prof]) => {
+      if (seq !== this.seq) return; // пока грузилось, переключили режим или карточку
+      this.paint(top && top.ok ? top.top : null, prof && prof.ok ? prof.card : null, uid);
+    });
+  },
+  paint(top, card, uid) {
+    const note = $('rt-note'), list = $('rt-list'), me = $('rt-me'), recent = $('rt-recent');
+    // карточка: чужая (открыта из таблицы) или своя; у гостя вместо неё — пояснение
+    if (card) {
+      me.innerHTML = (this.who ? '<button type="button" class="btn-ghost btn-sm" data-back>← Назад к таблице</button>' : '') + this.cardHtml(card, !this.who);
+      if (card.uid === Account.uid && card.rt) { Account.rt = card.rt; Account.render(); }
+    } else if (this.who) {
+      me.innerHTML = '<button type="button" class="btn-ghost btn-sm" data-back>← Назад к таблице</button><p class="env-note">Не удалось загрузить карточку игрока.</p>';
+    } else if (!Account.ok) {
+      me.innerHTML = '';
+    } else {
+      me.innerHTML = '<p class="env-note">Ваша карточка пока недоступна: сервер не ответил.</p>';
+    }
+    if (top === null) {
+      list.innerHTML = '';
+      note.textContent = 'Таблица лучших сейчас недоступна — сервер не ответил. Попробуйте «Обновить».';
+    } else {
+      note.textContent = !Account.ok && !this.who ? (Tg.on ? Account.whyText(Account.why) || 'Войти в игру через Telegram не удалось — рейтинг для гостей не ведётся.' : 'Вы играете не из Telegram: рейтинг ведётся только у вошедших через Telegram. Таблицу можно смотреть и так.') : '';
+      list.innerHTML = '<h3 class="rt-h">Лучшие игроки · ' + RT_MODES[this.mode] + '</h3>' + (top.length ? top.map((x) =>
+        '<button type="button" class="rt-row' + (x.uid === Account.uid ? ' me' : '') + '" data-uid="' + (x.uid | 0) + '"><span class="rt-pos">' + (x.n | 0) + '</span>' + Account.ava(x.uid, x.name, x.av, 28) + '<b>' + esc(x.name) + '</b>' +
+        '<span class="rt-lg" style="--lc:' + esc(x.lc || '#8a94a3') + '">' + esc(x.lg) + '</span><span class="rt-r">' + (x.r | 0) + '</span><span class="rt-wl" title="побед — поражений">' + (x.w | 0) + '–' + (x.l | 0) + '</span></button>').join('')
+        : '<p class="env-note">В таблицу попадают игроки, сыгравшие не меньше 5 рейтинговых боёв в этом режиме. Пока таких нет — станьте первым: включите «Рейтинговый бой» в комнате.</p>');
+    }
+    // бои: у боёв с записью — «Смотреть» (запись хранится на сервере 30 суток); кнопка «Показать ещё» — страницами по 10
+    const rs = card && card.recent ? card.recent : [];
+    this.cur = rs.length ? { uid: card.uid, t: rs[rs.length - 1].t, id: rs[rs.length - 1].id } : null;
+    recent.innerHTML = rs.length ? '<h3 class="rt-h">' + (this.who ? 'Бои игрока' : 'Мои бои') + '</h3>' + rs.map((m) => this.matchHtml(m)).join('') +
+      (rs.length >= 10 ? '<button type="button" class="btn-ghost btn-sm rt-more" data-more>Показать ещё</button>' : '') + (rs.some((m) => m.rec) ? '<p class="env-note">▶ — запись боя: он считается заново по приказам игроков. Записи хранятся 30 суток; в другой версии игры повтор может идти иначе.</p>' : '') : '';
+  },
+  cardHtml(c, mine) {
+    const modes = ['duel', 'multi'].map((k) => {
+      const x = c.rt && c.rt[k];
+      if (!x) return '';
+      const cal = /^Калибровка/.test(x.lg || ''), pos = c.pos && c.pos[k];
+      return '<div class="rt-mode" style="--lc:' + esc(x.lc || '#8a94a3') + '"><span>' + RT_MODES[k] + '</span><b>' + (x.r | 0) + '</b><small>' + esc(x.lg) + (pos ? ' · № ' + pos : '') + '</small>' +
+        '<small>побед ' + (x.w | 0) + ' · поражений ' + (x.l | 0) + (cal ? '' : ' · пик ' + (x.pk | 0)) + '</small></div>';
+    }).join('');
+    return '<div class="rt-card">' + Account.ava(c.uid, c.name, c.av, 44) + '<div class="rt-who"><b>' + esc(c.name) + '</b><small>' + (mine ? 'Ваш аккаунт' : 'Аккаунт Telegram') + (c.created ? ' · в игре с ' + new Date(c.created).toLocaleDateString('ru-RU') : '') + '</small></div><div class="rt-modes">' + modes + '</div></div>';
+  },
+  matchHtml(m) {
+    const o = RT_OUT[m.outcome] || '', cls = m.status === 'ok' ? m.outcome : 'void';
+    const d = typeof m.d === 'number' ? '<span class="rr-d ' + (m.d > 0 ? 'up' : m.d < 0 ? 'dn' : 'z') + '">' + (m.d > 0 ? '+' : m.d < 0 ? '−' : '±') + Math.abs(m.d) + '</span>' : '';
+    const mp = MAPS[m.map];
+    return '<div class="rt-mr ' + esc(cls) + '"><b>' + esc(m.status === 'ok' || m.outcome === 'early' || m.outcome === 'quit' ? o : 'Не засчитан') + '</b><span>' + esc(mp ? mp.name : m.map) + ' · ' + (m.mode === 'duel' ? 'дуэль' : 'мультиплеер') + (m.ranked ? '' : ' · без рейтинга') + '</span>' + d +
+      (m.r != null ? '<span class="rr-n">' + (m.r | 0) + '</span>' : '') + (m.rec ? '<button type="button" class="btn-ghost btn-sm rt-play" data-rec="' + esc(m.id) + '" aria-label="Смотреть запись боя">▶ Смотреть</button>' : '') + '<time>' + History.when(m.t) + '</time></div>';
   },
 };
 

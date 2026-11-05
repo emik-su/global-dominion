@@ -11,7 +11,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { Room } from './room.js';
+import { Room, RANKED_MAPS } from './room.js';
+import { Accounts } from './accounts.js';
+import { handleApi, loginInit, reportMatch, rankInfo, saveReplay } from './api.js';
+import { authConfigured } from './auth.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.resolve(process.env.PUBLIC_DIR || DIR);
@@ -19,6 +22,23 @@ const SERVE = new Set(['/index.html', '/favicon.ico']); // наружу — то
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 const rooms = new Map();
+// Аккаунты (ТЗ v8): профили, рейтинг, записи боёв — файл SQLite (ACCOUNTS_DB=путь, по умолчанию accounts.sqlite рядом с сервером;
+// в режиме проверок GD_FAST=1 — в памяти).
+// Нужен Node 22+ (node:sqlite). GD_NO_ACCOUNTS=1 или старый Node — без аккаунтов: все игроки гости.
+// Проверка входа Telegram: TG_BOT_ID=<число> (без токена) или BOT_TOKEN=<токен бота> (секрет — только в окружении сервера).
+let accounts = null;
+const env = Object.assign({}, process.env);
+if (!process.env.GD_NO_ACCOUNTS) {
+  try {
+    const { nodeStore } = await import('./nodestore.js');
+    accounts = new Accounts(nodeStore(process.env.ACCOUNTS_DB || (process.env.GD_FAST ? ':memory:' : path.join(DIR, 'accounts.sqlite'))));
+  } catch (e) { console.log('Аккаунты отключены: ' + (e && e.message)); }
+}
+// только для проверок (GD_TEST_PHOTOS=1): «фото Telegram» отдаются из памяти, наружу сервер за ними не ходит
+if (process.env.GD_TEST_PHOTOS === '1') {
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  env.__fetch = async () => new Response(PNG, { headers: { 'content-type': 'image/png' } });
+}
 // общий список открытых комнат (комната сама обновляет свою запись: io.publish)
 const directory = new Map();
 const listRooms = () => [...directory.values()].filter((r) => Date.now() - r.t < 60000).sort((a, b) => (a.state === 'lobby' ? 0 : 1) - (b.state === 'lobby' ? 0 : 1) || b.t - a.t).slice(0, 50);
@@ -28,7 +48,18 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/config.json') {
     res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-    res.end(JSON.stringify({ tgLink: process.env.TG_LINK || '' }));
+    const auth = !!accounts && authConfigured(env);
+    res.end(JSON.stringify({ tgLink: process.env.TG_LINK || '', auth, rank: auth, rankMaps: RANKED_MAPS }));
+    return;
+  }
+  if (url.pathname.startsWith('/api/')) {
+    if (!accounts) { res.writeHead(503, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end('{"ok":false,"why":"noaccounts"}'); return; }
+    const hdr = new Headers();
+    for (const [k, v] of Object.entries(req.headers)) if (typeof v === 'string') hdr.set(k, v);
+    handleApi(accounts, env, new Request('http://x' + req.url, { method: req.method, headers: hdr })).then(async (r) => {
+      res.writeHead(r.status, Object.fromEntries(r.headers));
+      res.end(Buffer.from(await r.arrayBuffer()));
+    }).catch((e) => { res.writeHead(500, { 'content-type': 'application/json' }); res.end('{"ok":false,"why":"error"}'); console.log('api:', e && e.message); });
     return;
   }
   if (url.pathname === '/rooms') {
@@ -114,8 +145,10 @@ server.on('upgrade', (req, socket) => {
   if (!room) {
     // GD_FAST=1 — короткие сроки обрывов (для проверок); GD_LAG / GD_DROP — свои сроки отставания и обрыва (мс),
     // например для медленной тестовой машины с несколькими браузерами
-    const timing = process.env.GD_FAST ? { DROP_AFTER: +process.env.GD_DROP || 3000, LAG_DROP: +process.env.GD_LAG || 2500, LOBBY_GRACE: 3000, HOST_GRACE: 1500, LOAD_WAIT: 8000, EMPTY_END: 4000, PRES_GAP: 500, SPEC_DELAY: +process.env.GD_SPEC || 3000, PUB_GAP: 200 } : undefined;
-    room = new Room(code, { setInterval, clearInterval, now: () => Date.now(), timing, allowDbg: process.env.GD_TEST_DBG === '1', publish: (c, info) => { if (info) directory.set(c, info); else directory.delete(c); }, onEmpty: () => { if (rooms.get(code) === room) rooms.delete(code); directory.delete(code); } });
+    // GD_EARLY — граница «раннего» выхода из боя (мс, по умолчанию 3 минуты); GD_RETURN — время возврата в бой после вылета (мс, по умолчанию 4 минуты)
+    const timing = Object.assign({}, process.env.GD_FAST ? { DROP_AFTER: +process.env.GD_DROP || 3000, LAG_DROP: +process.env.GD_LAG || 2500, LOBBY_GRACE: 3000, HOST_GRACE: 1500, LOAD_WAIT: 8000, EMPTY_END: 4000, PRES_GAP: 500, SPEC_DELAY: +process.env.GD_SPEC || 3000, PUB_GAP: 200 } : {},
+      process.env.GD_EARLY ? { EARLY_MS: +process.env.GD_EARLY } : {}, process.env.GD_RETURN ? { RETURN_WINDOW: +process.env.GD_RETURN } : {});
+    room = new Room(code, { setInterval, clearInterval, now: () => Date.now(), timing, allowDbg: process.env.GD_TEST_DBG === '1', auth: accounts ? (init) => loginInit(accounts, env, init) : undefined, report: accounts ? async (p) => reportMatch(accounts, p) : undefined, rankCheck: accounts ? async (uids) => rankInfo(accounts, uids) : undefined, saveRec: accounts ? async (id, bytes) => saveReplay(accounts, id, bytes) : undefined, publish: (c, info) => { if (info) directory.set(c, info); else directory.delete(c); }, onEmpty: () => { if (rooms.get(code) === room) rooms.delete(code); directory.delete(code); } });
     rooms.set(code, room);
   }
   const conn = makeConn(socket, (t) => room.message(conn, t), (c) => room.closed(c));

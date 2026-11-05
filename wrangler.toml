@@ -16,10 +16,22 @@ fallthrough = false
 name = "ROOMS"
 class_name = "RoomDO"
 
+# аккаунты игроков: один общий объект с базой SQLite (профили, рейтинг, записи боёв)
+[[durable_objects.bindings]]
+name = "ACCOUNTS"
+class_name = "AccountsDO"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["RoomDO"]
 
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AccountsDO"]
+
 [vars]
 # Ссылка на бота Telegram: приглашения в комнату будут вида https://t.me/RTSGD_bot?startapp=КОД
 TG_LINK = "https://t.me/RTSGD_bot"
+# Вход через Telegram: ЧИСЛОВОЙ номер бота — цифры до двоеточия в токене от BotFather (это не секрет).
+# Если оставить пустым, все игроки считаются гостями, а рейтинговые бои недоступны.
+TG_BOT_ID = "8731558953"

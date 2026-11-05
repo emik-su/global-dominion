@@ -227,38 +227,52 @@ body.aiming #app #hint button { padding: 6px 12px; flex: none; }
   position: absolute; right: var(--gr); top: calc(var(--gt) + 60px);
   display: flex; flex-direction: column; gap: 6px;
 }
-#quick button {
+:is(#quick, #qfree) button {
   width: 58px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   background: var(--glass); border: 1px solid var(--line); border-radius: 3px; color: var(--ink-dim); cursor: pointer;
   font-size: 11px; letter-spacing: 0.04em; padding: 0;
 }
-#quick button i { width: 20px; height: 20px; display: block; }
+:is(#quick, #qfree) button i { width: 20px; height: 20px; display: block; }
+/* режим «Расставить кнопки» (просьба 05.11): кнопки перетаскиваются пальцем; #qfree — расставленные кнопки */
+#hud > #qfree { position: absolute; inset: 0; pointer-events: none; z-index: 6; } /* поверх миникарты и панели: кнопку поставили туда сами */
+#qfree > button { position: absolute; pointer-events: auto; }
+#hudsafe { position: absolute; left: var(--gl); right: var(--gr); top: calc(var(--gt) + 4px); bottom: calc(var(--gb) + 4px); visibility: hidden; pointer-events: none; }
+#hud > #hudlay { position: absolute; inset: 0; z-index: 40; background: rgba(4, 8, 12, 0.58);
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 24px 24px; touch-action: none; }
+body.hud-editing :is(#quick, #qfree) { z-index: 42; }
+body.hud-editing #hud :is(#quick, #qfree) button[data-q] { display: flex !important; touch-action: none; cursor: grab; outline: 1px dashed var(--line-hi); outline-offset: 2px; color: var(--ink); }
+body.hud-editing #hud :is(#quick, #qfree) button.hud-off { opacity: 0.38; text-decoration: line-through; outline-style: dotted; }
+body.hud-editing #hud button.hud-drag { cursor: grabbing; outline: 2px solid var(--ore); box-shadow: 0 6px 18px rgba(0,0,0,0.55); transform: scale(1.08); z-index: 2; }
+body.hud-preview #hud > :not(#quick):not(#qfree):not(#hudlay):not(#hudbar) { visibility: hidden; }
+.hud-ghost { position: absolute; border: 1px dashed rgba(255,255,255,0.35); border-radius: 3px; color: rgba(255,255,255,0.5); font-size: 11px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+#hud > #hudbar { position: absolute; z-index: 41; left: 30%; top: 30%; width: min(400px, calc(100% - 2 * var(--gl) - 150px)); min-width: 230px; padding: 12px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; touch-action: none; cursor: move; }
+#hudbar b { font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+#hudbar p { margin: 0; font-size: 13px; line-height: 1.3; color: var(--ink-dim); }
+#hudbar small { font-size: 12px; color: var(--ink-dim); }
+#hudbar .hb-row { display: flex; flex-wrap: wrap; gap: 6px; }
+#hudbar .hb-row > button { flex: 1 1 auto; min-height: 36px; cursor: pointer; }
+#app.lsh #hudbar { padding: 8px 10px; gap: 5px; }
+#app.lsh #hudbar p { font-size: 12px; }
+#app.lsh #hudbar .hb-row > button { min-height: 32px; font-size: 12px; }
 /* ТЗ v7: кнопки на экране настраиваются (порядок, какие видны, сторона, размер) — Hud в 20_ui.js */
-#quick button.hud-off { display: none !important; }
+:is(#quick, #qfree) button.hud-off { display: none !important; }
 body.hud-left #quick { right: auto; left: var(--gl); }
 body.hud-left #quick.grid { direction: ltr; }
 body.hud-left #alerts { left: calc(var(--gl) + var(--qw, 60px) + 10px); width: min(380px, calc(100% - var(--gl) - var(--gr) - var(--qw, 60px) - 20px)); }
-body.hud-large #quick button { width: 70px; height: 60px; font-size: 12px; }
-body.hud-large #quick button i { width: 24px; height: 24px; }
-body.hud-large #app.w720 #quick button { width: 60px; height: 52px; font-size: 11px; }
-body.hud-large #app.lsh #quick button { width: 56px; height: 40px; font-size: 10px; }
-body.hud-large #app.lsh #quick button i { width: 18px; height: 18px; }
-#hudedit { z-index: 14; }
-#hudedit .hud-list { display: flex; flex-direction: column; gap: 4px; max-height: 52vh; overflow: auto; margin: 8px 0; }
-#hudedit .hud-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 3px; background: var(--glass); }
-#hudedit .hud-row.off { opacity: 0.55; }
-#hudedit .hud-row span { flex: 1; font-size: 13px; }
-#hudedit .hud-row button { min-width: 34px; height: 30px; }
-#hudedit .hud-row input { width: 22px; height: 22px; }
-#quick button svg { width: 100%; height: 100%; }
-#quick button:hover { color: var(--ink); border-color: var(--line-hi); }
-#quick button.on { color: var(--ore-ink); background: var(--ore); border-color: var(--ore); }
+body.hud-large :is(#quick, #qfree) button { width: 70px; height: 60px; font-size: 12px; }
+body.hud-large :is(#quick, #qfree) button i { width: 24px; height: 24px; }
+body.hud-large #app.w720 :is(#quick, #qfree) button { width: 60px; height: 52px; font-size: 11px; }
+body.hud-large #app.lsh :is(#quick, #qfree) button { width: 56px; height: 40px; font-size: 10px; }
+body.hud-large #app.lsh :is(#quick, #qfree) button i { width: 18px; height: 18px; }
+:is(#quick, #qfree) button svg { width: 100%; height: 100%; }
+:is(#quick, #qfree) button:hover { color: var(--ink); border-color: var(--line-hi); }
+:is(#quick, #qfree) button.on { color: var(--ore-ink); background: var(--ore); border-color: var(--ore); }
 /* не помещаются над нижней панелью (низкий экран) — два столбца, заполняются справа */
 #quick.grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--qrows, 5), auto); direction: rtl; }
 #quick.grid > button { direction: ltr; }
-body:not(.touch) #quick [data-q="box"] { display: none; }
-body:not(.has-aa) #quick [data-q="aa"], body.spectate #quick [data-q="aa"], body:not(.has-air) #quick [data-q="air"], body:not(.has-allies) #quick [data-q="ping"], body.spectate #quick [data-q="air"], body.spectate #quick [data-q="ping"], body.observer #quick [data-q="ping"] { display: none; }
-body.spectate #quick [data-q="hq"], body.spectate #quick [data-q="army"], body.spectate #quick [data-q="amove"], body.spectate #quick [data-q="stop"] { display: none; }
+body:not(.touch) :is(#quick, #qfree) [data-q="box"] { display: none; }
+body:not(.has-aa) :is(#quick, #qfree) [data-q="aa"], body.spectate :is(#quick, #qfree) [data-q="aa"], body:not(.has-air) :is(#quick, #qfree) [data-q="air"], body:not(.has-allies) :is(#quick, #qfree) [data-q="ping"], body.spectate :is(#quick, #qfree) [data-q="air"], body.spectate :is(#quick, #qfree) [data-q="ping"], body.observer :is(#quick, #qfree) [data-q="ping"] { display: none; }
+body.spectate :is(#quick, #qfree) [data-q="hq"], body.spectate :is(#quick, #qfree) [data-q="army"], body.spectate :is(#quick, #qfree) [data-q="amove"], body.spectate :is(#quick, #qfree) [data-q="stop"] { display: none; }
 
 #dock {
   position: absolute; left: 0; right: 0; bottom: 0;
@@ -670,7 +684,7 @@ body:not(.touch) .touch-only { display: none; }
 #app.w720 #alerts { top: calc(var(--gt) + 50px); width: calc(100% - var(--gl) - var(--gr) - 64px); }
 #app.w720 .alert { font-size: 13px; padding: 6px 8px; }
 #app.w720 #hint { top: calc(var(--gt) + 50px); font-size: 13px; }
-#app.w720 #quick button { width: 50px; height: 44px; font-size: 10px; }
+#app.w720 :is(#quick, #qfree) button { width: 50px; height: 44px; font-size: 10px; }
 #app.w720 #dock { gap: 8px; padding-bottom: calc(var(--gb) + 10px); }
 #app.w720 #panel { padding: 8px; gap: 6px; flex: 1 1 auto; flex-direction: column; align-items: stretch; }
 #app.w720 #selinfo { flex: 0 0 auto; }
@@ -713,8 +727,8 @@ body:not(.touch) .touch-only { display: none; }
 #app.lsh .chips { max-height: 40px; }
 #app.lsh .tabs button { padding: 2px 6px; font-size: 10px; min-width: 56px; }
 #app.lsh #quick { top: calc(var(--gt) + 42px); gap: 3px; }
-#app.lsh #quick button { width: 46px; height: 32px; font-size: 9px; gap: 0; }
-#app.lsh #quick button i { width: 15px; height: 15px; }
+#app.lsh :is(#quick, #qfree) button { width: 46px; height: 32px; font-size: 9px; gap: 0; }
+#app.lsh :is(#quick, #qfree) button i { width: 15px; height: 15px; }
 #app.lsh .btn-main { padding: 10px 26px; font-size: 18px; }
 #app.w1100.hint-on #alerts { top: calc(var(--gt) + 108px); }
 #app.w560 #swbar { position: absolute; top: calc(var(--gt) + 50px); left: var(--gl); right: 76px; }
@@ -1047,6 +1061,15 @@ body:not(.touch) .touch-only { display: none; }
     <button type="button" data-q="ret" aria-label="Выбранным — отход к базе"><i></i>На базу</button>
     <button type="button" data-q="fix" aria-label="Повреждённую технику — на ремонт"><i></i>Ремонт</button>
   </div>
+  <div id="qfree"><div id="hudsafe"></div></div>
+  <div id="hudlay" hidden><div id="hudghost"></div></div>
+  <div id="hudbar" class="glass ticks" role="dialog" aria-label="Расстановка кнопок" hidden>
+    <b>Расстановка кнопок</b>
+    <p>Перетащите кнопку пальцем в удобное место. Касание кнопки — скрыть или показать её. Эту рамку тоже можно сдвинуть.</p>
+    <small id="hb-note"></small>
+    <div class="hb-row"><button type="button" class="btn-ghost btn-sm" id="hb-size"></button><button type="button" class="btn-ghost btn-sm" id="hb-side"></button><button type="button" class="btn-ghost btn-sm" id="hb-reset">Сбросить всё</button></div>
+    <div class="hb-row"><button type="button" class="btn-ghost" id="hb-cancel">Отмена</button><button type="button" class="btn-main" id="hb-done">Готово</button></div>
+  </div>
   <div id="dock">
     <div id="mm" class="glass ticks"><canvas id="minimap" aria-label="Миникарта"></canvas></div>
     <div id="panel" class="glass ticks">
@@ -1195,7 +1218,7 @@ body:not(.touch) .touch-only { display: none; }
           <label class="tgl touch-only" for="opt-land0">Горизонтальный экран<input type="checkbox" id="opt-land0"></label>
           <div class="opt"><label class="tgl" for="opt-voice0" title="Голосом: «Постройка завершена», «Приближение вражеских войск», «Наша база атакована», «Недостаточно энергии», тайное оружие и другие события">Голосовые оповещения<input type="checkbox" id="opt-voice0"></label>
             <small class="voice-info"></small><label class="sel voice-sel" hidden><span class="vh">Голос</span><select id="opt-vname0"></select></label><button type="button" class="btn-ghost btn-sm" id="b-voice-test">Проверить голос</button></div>
-          <div class="opt"><span>Кнопки на экране</span><button type="button" class="btn-ghost btn-sm" id="b-hud0">Настроить…</button><small>Порядок, какие показывать, сторона экрана и размер быстрых кнопок боя.</small></div>
+          <div class="opt"><span>Кнопки на экране</span><button type="button" class="btn-ghost btn-sm" id="b-hud0">Расставить кнопки…</button><small>Перетащите быстрые кнопки боя пальцем в удобное место, скройте лишние, выберите размер.</small></div>
           <label class="tgl" for="opt-dev0" title="Счётчики кадров и памяти, состояние сети и сверки хешей, журнал сбоев; в одиночной игре — создание войск, кредиты, ускорение стройки (на компьютере — F9)">Панель разработчика<input type="checkbox" id="opt-dev0"></label>
         </div>
       </section>
@@ -1343,31 +1366,6 @@ body:not(.touch) .touch-only { display: none; }
     <form id="on-chat-form"><label class="vh" for="on-chat-in">Сообщение</label><input type="text" id="on-chat-in" maxlength="140" enterkeyhint="send" autocomplete="off" placeholder="Сообщение…"><button type="submit" class="btn-main btn-sm">Отправить</button></form>
   </aside>
 </div>
-<div id="hudedit" class="screen" hidden>
-  <div class="dialog-wrap">
-    <div class="dialog glass ticks" role="dialog" aria-modal="true" aria-labelledby="hud-title">
-      <h2 id="hud-title">Кнопки на экране</h2>
-      <p class="brief">Порядок — стрелками, галочка — показывать кнопку. Изменения видны сразу.</p>
-      <div class="hud-list" id="hud-list"></div>
-      <div class="opt"><span id="lbl-hudside">Сторона экрана</span>
-        <div class="seg" role="radiogroup" aria-labelledby="lbl-hudside">
-          <label><input type="radio" name="hudside" value="right"><span>Справа</span></label>
-          <label><input type="radio" name="hudside" value="left"><span>Слева</span></label>
-        </div>
-      </div>
-      <div class="opt"><span id="lbl-hudsize">Размер кнопок</span>
-        <div class="seg" role="radiogroup" aria-labelledby="lbl-hudsize">
-          <label><input type="radio" name="hudsize" value="normal"><span>Обычные</span></label>
-          <label><input type="radio" name="hudsize" value="large"><span>Крупные</span></label>
-        </div>
-      </div>
-      <div class="row">
-        <button type="button" class="btn-ghost" id="b-hud-reset">По умолчанию</button>
-        <button type="button" class="btn-main" id="b-hud-done">Готово</button>
-      </div>
-    </div>
-  </div>
-</div>
 <div id="pause" class="screen" hidden>
   <div class="dialog-wrap">
     <div class="dialog glass ticks" role="dialog" aria-modal="true" aria-labelledby="pause-title">
@@ -1386,7 +1384,7 @@ body:not(.touch) .touch-only { display: none; }
           <label class="tgl" for="opt-voice" title="Голосом — события боя">Голосовые оповещения<input type="checkbox" id="opt-voice"></label>
           <label class="tgl" for="opt-dev" title="Счётчики, сеть, журнал сбоев, инструменты проверки (F9)">Панель разработчика<input type="checkbox" id="opt-dev"></label>
           <button type="button" class="btn-ghost touch-only" id="b-flip">Перевернуть экран на 180°</button>
-          <button type="button" class="btn-ghost" id="b-hud">Кнопки на экране…</button>
+          <button type="button" class="btn-ghost" id="b-hud">Расставить кнопки…</button>
         </div>
         <div class="toggles">
           <div class="opt"><span id="lbl-speed">Скорость игры</span>
@@ -1480,7 +1478,7 @@ return {ACESFilmicToneMapping:et,AddEquation:y,AddOperation:J,AdditiveAnimationB
 </script>
 <script>
 function bootGame(THREE, HOT) {
-const GD_BUILD = '119bab7c79';
+const GD_BUILD = 'ab060facf2';
 // ---- 00_core.js ----
 // =====================================================================
 //  GLOBAL DOMINION — браузерная 3D RTS на Three.js (прежнее название — «Стальной фронт»)
@@ -28248,11 +28246,18 @@ const Input = {
     else if (this.mode === 'sw' || this.mode === 'amove' || this.mode === 'cyber' || this.mode === 'ability' || this.mode === 'ping') cur = 'crosshair';
     else if (this.mode === 'mines') cur = this.minePos && this.minePos.ok ? 'copy' : 'not-allowed';
     else if (this.mode === 'wall') cur = 'copy';
-    else if (ent && units.length && this.specialCursor(ent, units)) cur = 'alias';
+    else if (ent && units.length && (this.specialCursor(ent, units) || this.boardable(ent, units))) cur = 'alias';
     else if (ent && ent.kind !== 'mine' && isEnemy(VIEWER, ent.team) && units.some((u) => u.weapon)) cur = 'crosshair';
     else if (ent && ent.kind !== 'mine') cur = 'pointer';
     else if (units.some((u) => u.type === 'harvester')) { const g = screenToGround(x, y); if (g && fieldAt(g.x, g.z)) cur = 'cell'; }
     if (this.el.style.cursor !== cur) this.el.style.cursor = cur;
+  },
+  // свой транспорт, в который можно посадить кого-то из выбранных: грузовой вертолёт или БМП (пехота)
+  boardable(ent, units) {
+    if (!ent || ent.kind !== 'unit' || !own(ent) || units.includes(ent)) return false;
+    if (ent.def.cargo) return units.some((u) => cargoSlots(u));
+    if (ent.def.troops) return units.some((u) => trFits(ent, u));
+    return false;
   },
   specialCursor(ent, units) {
     if (ent.kind === 'mine') return units.some((u) => u.def.ability === 'engineer');
@@ -28460,7 +28465,8 @@ const Input = {
     if (ent && ent.kind !== 'mine' && own(ent)) {
       if (ent.kind === 'unit') {
         // выбраны бойцы или техника и касание своего транспортного вертолёта — приказ на посадку
-        if (ent.def.cargo && !Sel.units.includes(ent) && Sel.units.some((u) => cargoSlots(u)) && this.canCommand()) { this.issueAt(x, y, false); return; }
+        // выбраны войска и касание своего транспорта (вертолёт или БМП) — приказ на посадку
+        if (this.boardable(ent, Sel.units) && this.canCommand()) { this.issueAt(x, y, false); return; }
         if (Sel.units.length === 1 && Sel.units[0] === ent) { this.selectSameType(ent); return; }
         Sel.set([ent]);
       } else {
@@ -29736,6 +29742,7 @@ const UI = {
   fitQuick() {
     const q = $('quick');
     if (!q) return;
+    if (typeof Hud !== 'undefined') Hud.place(); // расставленные пальцем кнопки — после поворота/смены размера
     const btns = Array.from(q.children).filter((b) => b.offsetParent !== null);
     if (!btns.length) return;
     const was = q.classList.contains('grid');
@@ -30632,56 +30639,198 @@ function drawFlags(root) {
 }
 
 // =====================================================================
-//  Кнопки на экране (ТЗ v7: «расставлять и настраивать активные кнопки во время боя»): порядок, какие видны,
-//  сторона экрана (справа/слева), размер. Настройка — Settings.hud, окно — из паузы и из настроек меню.
+//  Кнопки на экране (ТЗ v7; просьба 05.11 — «как во многих играх»): режим «Расставить кнопки» поверх боя —
+//  кнопку перетаскивают пальцем (мышью) в любое место экрана, касание — скрыть/показать, «Крупные», «Столбец
+//  справа/слева» для нерасставленных, «Сбросить всё». Настройка — Settings.hud = {order, hidden, side, size, pos},
+//  pos[key] = [fx, fy] — доля свободного места по горизонтали/вертикали (0 — у левого/верхнего края безопасной
+//  зоны, 1 — у правого/нижнего), поэтому кнопка у края остаётся у края на любом экране и после поворота.
+//  Расставленные кнопки лежат в #qfree (абсолютно), остальные — в обычном столбце #quick (UI.fitQuick).
 // =====================================================================
 const HUD_KEYS = ['hq', 'box', 'army', 'aa', 'air', 'ping', 'chat', 'amove', 'stop', 'clear', 'hold', 'ret', 'fix'];
 const HUD_NAMES = { hq: 'Штаб', box: 'Рамка (сенсорный экран)', army: 'Армия', aa: 'ПВО', air: 'Авиация', ping: 'Метка союзникам', chat: 'Чат боя', amove: 'Атака с ходу', stop: 'Стоп', clear: 'Сброс выделения', hold: 'Держать позицию', ret: 'На базу', fix: 'На ремонт' };
 const HUD_HIDDEN0 = ['hold', 'ret', 'fix'];
 const Hud = {
+  editing: false, prev: null, snap: null, drag: null, sz: '',
   cfg() {
     const h = Settings.hud || {};
     const order = (Array.isArray(h.order) ? h.order : []).filter((k) => HUD_KEYS.includes(k));
     for (const k of HUD_KEYS) if (!order.includes(k)) order.push(k); // новые кнопки — в конец
-    return { order, hidden: Array.isArray(h.hidden) ? h.hidden.filter((k) => HUD_KEYS.includes(k)) : HUD_HIDDEN0.slice(), side: h.side === 'left' ? 'left' : 'right', size: h.size === 'large' ? 'large' : 'normal' };
+    const pos = {};
+    if (h.pos && typeof h.pos === 'object') for (const k of HUD_KEYS) { const v = h.pos[k]; if (Array.isArray(v) && v.length === 2 && v.every((x) => Number.isFinite(x))) pos[k] = [clamp(v[0], 0, 1), clamp(v[1], 0, 1)]; }
+    return { order, hidden: Array.isArray(h.hidden) ? h.hidden.filter((k) => HUD_KEYS.includes(k)) : HUD_HIDDEN0.slice(), side: h.side === 'left' ? 'left' : 'right', size: h.size === 'large' ? 'large' : 'normal', pos };
+  },
+  btn(k) { return document.querySelector('#quick [data-q="' + k + '"], #qfree [data-q="' + k + '"]'); },
+  // безопасная зона (вырез, полоска «домой», кнопки Telegram) в координатах кадра
+  safe() {
+    const s = $('hudsafe');
+    if (!s || !s.offsetWidth) return { l: 4, t: 4, w: (View.w || innerWidth) - 8, h: (View.h || innerHeight) - 8 };
+    return { l: s.offsetLeft, t: s.offsetTop, w: s.offsetWidth, h: s.offsetHeight };
   },
   apply() {
-    const c = this.cfg(), q = $('quick');
+    const c = this.cfg(), q = $('quick'), fr = $('qfree');
     if (!q) return;
-    for (const k of c.order) { const b = q.querySelector('[data-q="' + k + '"]'); if (b) { q.appendChild(b); b.classList.toggle('hud-off', c.hidden.includes(k)); } }
+    for (const k of c.order) {
+      const b = this.btn(k); if (!b) continue;
+      b.classList.toggle('hud-off', c.hidden.includes(k));
+      if (c.pos[k] && fr) fr.appendChild(b);
+      else { q.appendChild(b); b.style.left = b.style.top = ''; }
+    }
     document.body.classList.toggle('hud-left', c.side === 'left');
     document.body.classList.toggle('hud-large', c.size === 'large');
+    this.sz = '';
+    this.place();
     if (UI.fitQuick) UI.fitQuick();
   },
-  set(c) { Settings.hud = c; Settings.save(); this.apply(); this.render(); },
+  // расставленные кнопки — по долям в пиксели (после поворота экрана, смены размера — заново)
+  place() {
+    const fr = $('qfree');
+    if (!fr || !fr.children.length) return;
+    const c = this.cfg(), z = this.safe();
+    const key = z.l + ',' + z.t + ',' + z.w + ',' + z.h + ',' + c.size + ',' + fr.children.length;
+    if (key === this.sz && !this.editing) return;
+    this.sz = key;
+    for (const b of Array.from(fr.querySelectorAll('button[data-q]'))) {
+      if (this.drag && this.drag.b === b) continue;
+      const p = c.pos[b.dataset.q]; if (!p) continue;
+      const bw = b.offsetWidth || 58, bh = b.offsetHeight || 50;
+      b.style.left = Math.round(z.l + p[0] * Math.max(0, z.w - bw)) + 'px';
+      b.style.top = Math.round(z.t + p[1] * Math.max(0, z.h - bh)) + 'px';
+    }
+  },
+  set(c) { Settings.hud = c; Settings.save(); this.apply(); this.sync(); },
+  // ---- режим расстановки ----
   open() {
-    $('hudedit').hidden = false;
-    this.render();
+    if (this.editing) return;
+    SFX.ui('click');
+    this.snap = JSON.stringify(Settings.hud || null);
+    const scr = ['loading', 'menu', 'online', 'pause', 'end'].filter((id) => $(id) && !$(id).hidden);
+    this.prev = { scr, hud: $('hud').hidden };
+    for (const id of scr) $(id).hidden = true;
+    const preview = !(G.state === 'playing' || G.state === 'paused' || G.state === 'over') || !!G.replay;
+    $('hud').hidden = false;
+    this.editing = true;
+    document.body.classList.add('hud-editing');
+    document.body.classList.toggle('hud-preview', preview);
+    $('hudlay').hidden = false; $('hudbar').hidden = false;
+    this.apply();
+    this.ghosts(preview);
+    this.sync();
+    // рамка с подсказкой — посередине экрана (кнопки обычно у краёв)
+    const hb = $('hudbar'), W = View.w || innerWidth, H = View.h || innerHeight;
+    hb.style.left = Math.max(4, Math.round((W - hb.offsetWidth) / 2)) + 'px';
+    hb.style.top = Math.max(4, Math.round((H - hb.offsetHeight) / 2)) + 'px';
+  },
+  close(ok) {
+    if (!this.editing) return;
+    if (!ok) { try { Settings.hud = JSON.parse(this.snap); } catch (e) { Settings.hud = null; } Settings.save(); }
+    this.drag = null;
+    this.editing = false;
+    document.body.classList.remove('hud-editing', 'hud-preview');
+    $('hudlay').hidden = true; $('hudbar').hidden = true;
+    const p = this.prev || { scr: [], hud: true };
+    for (const id of p.scr) $(id).hidden = false;
+    $('hud').hidden = p.hud;
+    this.prev = null;
+    this.apply();
     SFX.ui('click');
   },
-  close() { $('hudedit').hidden = true; SFX.ui('click'); },
-  render() {
-    const box = $('hud-list');
-    if (!box || $('hudedit').hidden) return;
+  // предпросмотр из главного меню (боя нет): рамки на месте верхней полосы, миникарты и нижней панели
+  ghosts(on) {
+    const g = $('hudghost');
+    if (!g) return;
+    g.innerHTML = '';
+    if (!on) return;
+    for (const [id, name] of [['topbar', 'Верхняя полоса'], ['mm', 'Миникарта'], ['panel', 'Панель выбранного']]) {
+      const el = $(id); if (!el || !el.offsetWidth) continue;
+      const r = View.rectOf(el), d = document.createElement('div');
+      d.className = 'hud-ghost'; d.textContent = name;
+      Object.assign(d.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: Math.max(r.height, 30) + 'px' });
+      g.appendChild(d);
+    }
+  },
+  sync() {
+    if (!this.editing) return;
     const c = this.cfg();
-    box.innerHTML = c.order.map((k, i) => '<div class="hud-row' + (c.hidden.includes(k) ? ' off' : '') + '" data-k="' + k + '"><button type="button" class="btn-ghost btn-sm" data-mv="-1" aria-label="Выше"' + (i ? '' : ' disabled') + '>↑</button><button type="button" class="btn-ghost btn-sm" data-mv="1" aria-label="Ниже"' + (i < c.order.length - 1 ? '' : ' disabled') + '>↓</button><span>' + esc(HUD_NAMES[k] || k) + '</span><input type="checkbox" aria-label="Показывать: ' + esc(HUD_NAMES[k] || k) + '"' + (c.hidden.includes(k) ? '' : ' checked') + '></div>').join('');
-    document.querySelectorAll('[name="hudside"]').forEach((r) => { r.checked = r.value === c.side; });
-    document.querySelectorAll('[name="hudsize"]').forEach((r) => { r.checked = r.value === c.size; });
+    $('hb-size').textContent = c.size === 'large' ? 'Размер: крупные' : 'Размер: обычные';
+    $('hb-side').textContent = c.side === 'left' ? 'Столбец: слева' : 'Столбец: справа';
+    const n = Object.keys(c.pos).length;
+    $('hb-note').textContent = n ? 'Расставлено кнопок: ' + n + ' из ' + HUD_KEYS.length + '. Остальные — в столбце у края.' : 'Пока все кнопки в столбце у края экрана.';
+  },
+  // перетаскивание: кнопка из столбца переходит в #qfree и идёт за пальцем; без сдвига — касание (скрыть/показать)
+  down(e) {
+    const b = e.target.closest && e.target.closest('#quick button[data-q], #qfree button[data-q]');
+    const bar = !b && e.target.closest && e.target.closest('#hudbar');
+    if (bar && (e.target.closest('button') || e.target.closest('input'))) return;
+    if (!b && !bar) { e.preventDefault(); e.stopPropagation(); return; } // мимо — бой под режимом не получает касаний
+    e.preventDefault(); e.stopPropagation();
+    const el = b || $('hudbar');
+    const p = View.pt(e), r = View.rectOf(el);
+    this.drag = { b: el, bar: !!bar, id: e.pointerId, x0: p.x, y0: p.y, l0: r.left, t0: r.top, moved: false };
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* нет захвата — следим за окном */ }
+  },
+  move(e) {
+    const d = this.drag;
+    if (!d || e.pointerId !== d.id) return;
+    e.preventDefault();
+    const p = View.pt(e), dx = p.x - d.x0, dy = p.y - d.y0;
+    if (!d.moved) {
+      if (Math.hypot(dx, dy) < 7) return;
+      d.moved = true;
+      d.b.classList.add('hud-drag');
+      if (!d.bar && d.b.parentNode !== $('qfree')) { $('qfree').appendChild(d.b); if (UI.fitQuick) UI.fitQuick(); }
+    }
+    const z = this.safe(), bw = d.b.offsetWidth, bh = d.b.offsetHeight;
+    let x = clamp(d.l0 + dx, z.l, z.l + Math.max(0, z.w - bw)), y = clamp(d.t0 + dy, z.t, z.t + Math.max(0, z.h - bh));
+    if (!d.bar) {
+      // прилипание к краям безопасной зоны и к соседним кнопкам (ровные ряды)
+      const S = 10;
+      if (x - z.l < S) x = z.l; if (z.l + z.w - bw - x < S) x = z.l + z.w - bw;
+      if (y - z.t < S) y = z.t; if (z.t + z.h - bh - y < S) y = z.t + z.h - bh;
+      for (const o of Array.from($('qfree').children)) {
+        if (o === d.b || !o.offsetWidth) continue;
+        const ox = o.offsetLeft, oy = o.offsetTop;
+        if (Math.abs(ox - x) < 6) x = ox;
+        if (Math.abs(oy - y) < 6) y = oy;
+      }
+    }
+    d.b.style.left = Math.round(x) + 'px'; d.b.style.top = Math.round(y) + 'px';
+  },
+  up(e, cancel) {
+    const d = this.drag;
+    if (!d || e.pointerId !== d.id) return;
+    e.preventDefault(); e.stopPropagation();
+    this.drag = null;
+    d.b.classList.remove('hud-drag');
+    if (d.bar) return;
+    const c = this.cfg(), k = d.b.dataset.q;
+    if (cancel) { this.apply(); return; }
+    if (!d.moved) { // касание — скрыть или показать
+      c.hidden = c.hidden.includes(k) ? c.hidden.filter((x) => x !== k) : c.hidden.concat([k]);
+      SFX.ui('click');
+      this.set(c);
+      return;
+    }
+    const z = this.safe(), bw = d.b.offsetWidth, bh = d.b.offsetHeight;
+    const fx = z.w > bw ? (d.b.offsetLeft - z.l) / (z.w - bw) : 0, fy = z.h > bh ? (d.b.offsetTop - z.t) / (z.h - bh) : 0;
+    c.pos[k] = [Math.round(clamp(fx, 0, 1) * 1000) / 1000, Math.round(clamp(fy, 0, 1) * 1000) / 1000];
+    SFX.ui('select');
+    this.set(c);
   },
   wire() {
-    const box = $('hud-list');
-    if (!box) return;
-    box.addEventListener('click', (e) => {
-      const row = e.target.closest('.hud-row'); if (!row) return;
-      const k = row.dataset.k, c = this.cfg();
-      const mv = e.target.closest('[data-mv]');
-      if (mv) { const i = c.order.indexOf(k), j = i + (+mv.dataset.mv); if (j < 0 || j >= c.order.length) return; c.order.splice(i, 1); c.order.splice(j, 0, k); this.set(c); SFX.ui('click'); return; }
-      if (e.target.matches('input[type="checkbox"]')) { c.hidden = e.target.checked ? c.hidden.filter((x) => x !== k) : c.hidden.concat([k]); this.set(c); SFX.ui('click'); }
-    });
-    document.querySelectorAll('[name="hudside"]').forEach((r) => r.addEventListener('change', () => { const c = this.cfg(); c.side = r.value; this.set(c); }));
-    document.querySelectorAll('[name="hudsize"]').forEach((r) => r.addEventListener('change', () => { const c = this.cfg(); c.size = r.value; this.set(c); }));
-    $('b-hud-reset').addEventListener('click', () => { this.set(null); SFX.ui('click'); });
-    $('b-hud-done').addEventListener('click', () => this.close());
+    const hud = $('hud');
+    if (!hud || !$('hudlay')) return;
+    // в режиме расстановки нажатия на кнопки не отдают приказов
+    hud.addEventListener('click', (e) => { if (this.editing && e.target.closest && e.target.closest('#quick, #qfree, #hudlay')) { e.stopPropagation(); e.preventDefault(); } }, true);
+    hud.addEventListener('pointerdown', (e) => { if (this.editing) this.down(e); }, true);
+    window.addEventListener('pointermove', (e) => { if (this.editing) this.move(e); }, { passive: false });
+    window.addEventListener('pointerup', (e) => { if (this.editing) this.up(e, false); }, true);
+    window.addEventListener('pointercancel', (e) => { if (this.editing) this.up(e, true); }, true);
+    $('hb-size').addEventListener('click', () => { const c = this.cfg(); c.size = c.size === 'large' ? 'normal' : 'large'; this.set(c); SFX.ui('click'); });
+    $('hb-side').addEventListener('click', () => { const c = this.cfg(); c.side = c.side === 'left' ? 'right' : 'left'; this.set(c); SFX.ui('click'); });
+    $('hb-reset').addEventListener('click', () => { this.set(null); SFX.ui('click'); });
+    $('hb-cancel').addEventListener('click', () => this.close(false));
+    $('hb-done').addEventListener('click', () => this.close(true));
+    window.addEventListener('keydown', (e) => { if (this.editing && e.key === 'Escape') { e.stopPropagation(); this.close(true); } }, true);
     for (const id of ['b-hud', 'b-hud0']) { const b = $(id); if (b) b.addEventListener('click', () => this.open()); }
     this.apply();
   },

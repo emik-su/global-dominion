@@ -567,7 +567,7 @@ body.replay #app.lsh #alerts { top: calc(var(--gt) + 130px); }
 #poi-note:empty, #on-poi-note:empty { display: none; }
 .slot.closed select[data-k="kind"] { color: var(--ink-faint); }
 .slot.me select[data-k="kind"] { border-color: rgba(232,170,62,0.6); color: var(--ore); }
-.sel { display: block; min-width: 0; }
+.sel { position: relative; display: block; min-width: 0; }
 .sel select {
   width: 100%; min-height: 34px; box-sizing: border-box; padding: 5px 26px 5px 9px; font-size: 14px;
   background: rgba(255,255,255,0.05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a3ab9f' stroke-width='1.4' fill='none'/%3E%3C/svg%3E") no-repeat right 9px center;
@@ -772,7 +772,9 @@ body:not(.touch) .touch-only { display: none; }
 .mn-tabs button:focus-visible { outline: 2px solid var(--ore); outline-offset: -2px; }
 .mn-tabs button b { margin-left: 4px; padding: 0 5px; border-radius: 8px; font-family: var(--f-mono); font-weight: 400; font-size: 11px; color: var(--ore-ink); background: var(--ore); }
 .mn-ink { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--ore); box-shadow: 0 0 10px rgba(232,170,62,0.6); transition: transform .28s cubic-bezier(.3,.7,.2,1), width .28s cubic-bezier(.3,.7,.2,1); pointer-events: none; }
-.mn-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 6px 18px 0; scrollbar-width: thin; scrollbar-color: rgba(206,214,196,0.25) transparent; }
+/* position: relative — скрытые подписи (.vh) и прочее с position: absolute остаются внутри прокрутки, а не растягивают
+   весь экран меню (иначе на повёрнутом телефоне вместе со списком уезжала вся панель) */
+.mn-body { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 6px 18px 0; scrollbar-width: thin; scrollbar-color: rgba(206,214,196,0.25) transparent; }
 .mn-page { display: flex; flex-direction: column; gap: 16px; animation: mn-in .3s cubic-bezier(.2,.7,.2,1); }
 .mn-page[hidden] { display: none; }
 @keyframes mn-in { from { opacity: 0.4; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -1478,7 +1480,7 @@ return {ACESFilmicToneMapping:et,AddEquation:y,AddOperation:J,AdditiveAnimationB
 </script>
 <script>
 function bootGame(THREE, HOT) {
-const GD_BUILD = 'a73f00db23';
+const GD_BUILD = '119bab7c79';
 // ---- 00_core.js ----
 // =====================================================================
 //  GLOBAL DOMINION — браузерная 3D RTS на Three.js (прежнее название — «Стальной фронт»)
@@ -2648,6 +2650,9 @@ const View = {
     const get = () => (axis === 'y' ? el.scrollTop : el.scrollLeft);
     el.addEventListener('touchstart', (e) => {
       if (!this.rot || e.touches.length !== 1) { st = null; return; }
+      // прокручивается только то, что задумано прокручиваемым (overflow: hidden — нет: экран меню не должен уезжать)
+      const ov = getComputedStyle(el)[axis === 'y' ? 'overflowY' : 'overflowX'];
+      if (ov !== 'auto' && ov !== 'scroll') { st = null; return; }
       cancelAnimationFrame(raf);
       const p = this.pt(e.touches[0]);
       st = { x: p.x, y: p.y, lx: p.x, ly: p.y, t: e.timeStamp, moved: false, s0: get() };
@@ -2655,6 +2660,8 @@ const View = {
     }, { passive: true });
     el.addEventListener('touchmove', (e) => {
       if (!st || !this.rot || e.touches.length !== 1) return;
+      // вложенные прокрутки: двигается только внутренняя (она уже взяла это касание)
+      if (e.defaultPrevented && !st.moved) { st = null; return; }
       const p = this.pt(e.touches[0]);
       const d = axis === 'y' ? p.y - st.y : p.x - st.x;
       if (!st.moved && Math.abs(d) < 7) return;
